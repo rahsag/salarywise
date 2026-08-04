@@ -1,0 +1,142 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { coachReply, computeScore } from './finance';
+import { loadState, saveState } from './storage';
+import { initialState, type AppState, type CityTier } from './types';
+
+export function useSalaryWise() {
+  const [state, setState] = useState<AppState>(initialState);
+  const [hydrated, setHydrated] = useState(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadState().then((saved) => {
+      if (cancelled) return;
+      if (saved) setState((cur) => ({ ...cur, ...saved }));
+      setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      saveState(stateRef.current);
+    }, 400);
+  }, [state, hydrated]);
+
+  useEffect(
+    () => () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    },
+    []
+  );
+
+  const startScore = useCallback(() => {
+    const s = stateRef.current;
+    const target = computeScore(s.salary, s.rent, s.emi, s.expenses, s.sip).total;
+    setState((cur) => ({ ...cur, animScore: 0 }));
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    let n = 0;
+    intervalRef.current = setInterval(() => {
+      n += Math.max(1, Math.round(target / 28));
+      if (n >= target) {
+        n = target;
+        if (intervalRef.current) clearInterval(intervalRef.current);
+      }
+      setState((cur) => ({ ...cur, animScore: n }));
+    }, 32);
+  }, []);
+
+  const sendChat = useCallback((text: string) => {
+    const t = text.trim();
+    if (!t) return;
+    setState((cur) => ({
+      ...cur,
+      chat: [...cur.chat, { role: 'user', text: t }],
+      chatInput: '',
+      coachTyping: true,
+    }));
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      const s = stateRef.current;
+      const reply = coachReply(t, {
+        salary: s.salary,
+        rent: s.rent,
+        emi: s.emi,
+        expenses: s.expenses,
+        sip: s.sip,
+        sipAmt: s.sipAmt,
+        sipR: s.sipR,
+        sipY: s.sipY,
+        taxIncome: s.taxIncome,
+        tax80c: s.tax80c,
+        taxHra: s.taxHra,
+        affIncome: s.affIncome,
+        affDown: s.affDown,
+        affRate: s.affRate,
+        affTenure: s.affTenure,
+        scoreTotal: computeScore(s.salary, s.rent, s.emi, s.expenses, s.sip).total,
+      });
+      setState((cur) => ({
+        ...cur,
+        chat: [...cur.chat, { role: 'coach', text: reply }],
+        coachTyping: false,
+      }));
+    }, 850);
+  }, []);
+
+  const set = <K extends keyof AppState>(key: K) => (value: AppState[K]) =>
+    setState((cur) => ({ ...cur, [key]: value }));
+
+  const actions = {
+    startScore,
+    setName: set('name'),
+    setMobile: set('mobile'),
+    setEmail: set('email'),
+    setOtpDigit: (i: number, v: string) =>
+      setState((cur) => {
+        const otp = [...cur.otp] as AppState['otp'];
+        otp[i] = v.slice(-1);
+        return { ...cur, otp };
+      }),
+    setAge: set('age'),
+    setCityTier: (v: CityTier) => set('cityTier')(v),
+    depMinus: () => setState((cur) => ({ ...cur, dependents: Math.max(0, cur.dependents - 1) })),
+    depPlus: () => setState((cur) => ({ ...cur, dependents: Math.min(9, cur.dependents + 1) })),
+    setSalary: set('salary'),
+    setRent: set('rent'),
+    setEmi: set('emi'),
+    setExpenses: set('expenses'),
+    setSip: set('sip'),
+    setEmiP: set('emiP'),
+    setEmiR: set('emiR'),
+    setEmiN: set('emiN'),
+    setSipAmt: set('sipAmt'),
+    setSipR: set('sipR'),
+    setSipY: set('sipY'),
+    setAffIncome: set('affIncome'),
+    setAffDown: set('affDown'),
+    setAffRate: set('affRate'),
+    setAffTenure: set('affTenure'),
+    setTaxIncome: set('taxIncome'),
+    setTax80c: set('tax80c'),
+    setTaxHra: set('taxHra'),
+    setChatInput: set('chatInput'),
+    sendChat,
+  };
+
+  return { state, actions, hydrated };
+}
+
+export type SalaryWiseActions = ReturnType<typeof useSalaryWise>['actions'];
