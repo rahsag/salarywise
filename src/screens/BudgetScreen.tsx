@@ -1,35 +1,36 @@
+import { useNavigation } from '@react-navigation/native';
+import { ScrollView, Text, View } from 'react-native';
 import { inr } from '../lib/finance';
-import type { SalaryWiseActions } from '../lib/useSalaryWise';
+import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
 import BackHeader from '../components/BackHeader';
-
-interface BudgetScreenProps {
-  salary: number;
-  rent: number;
-  emi: number;
-  expenses: number;
-  actions: SalaryWiseActions;
-}
+import ScreenTransition from '../components/ScreenTransition';
+import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
 
 function BudgetCard({ label, amount, note, bg, fg, sub }: { label: string; amount: string; note: string; bg: string; fg: string; sub: string }) {
   return (
-    <div style={{ background: bg, borderRadius: 20, padding: '18px 20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <div style={{ fontWeight: 800, color: fg, fontSize: 15 }}>{label}</div>
-        <div style={{ fontFamily: "'Fraunces',serif", fontSize: 22, fontWeight: 600, color: fg }}>{amount}</div>
-      </div>
-      <div style={{ fontSize: 12, color: sub, marginTop: 4 }}>{note}</div>
-    </div>
+    <View style={{ backgroundColor: bg, borderRadius: 20, padding: 20 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <Text style={{ fontWeight: '800', color: fg, fontSize: 15 }}>{label}</Text>
+        <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 22, color: fg }}>{amount}</Text>
+      </View>
+      <Text style={{ fontSize: 12, color: sub, marginTop: 4 }}>{note}</Text>
+    </View>
   );
 }
 
-export default function BudgetScreen({ salary, rent, emi, expenses, actions }: BudgetScreenProps) {
+export default function BudgetScreen() {
+  const navigation = useNavigation<any>();
+  const { state } = useSalaryWiseContext();
+  const { salary, rent, emi, expenses } = state;
+
   const needs = salary * 0.5;
   const wants = salary * 0.3;
   const saveTarget = salary * 0.2;
   const spent = rent + emi + expenses;
   const actualSave = (salary - spent) / Math.max(salary, 1);
   const asr = Math.round(actualSave * 100);
-  const verdictColor = actualSave >= 0.2 ? '#5a7d4f' : actualSave >= 0.1 ? '#c2882a' : '#c0562f';
+  const verdictColor = actualSave >= 0.2 ? colors.greenLight : actualSave >= 0.1 ? colors.amberWarn : colors.redOrange;
   const verdict =
     actualSave >= 0.2
       ? "You're beating the 20% savings target — great discipline. Consider bumping your SIP."
@@ -38,24 +39,26 @@ export default function BudgetScreen({ salary, rent, emi, expenses, actions }: B
         : 'Essentials are eating most of your income. Revisit rent or big EMIs before adding goals.';
 
   return (
-    <div className="sw-screen-in" style={{ padding: '8px 24px 40px' }}>
-      <BackHeader title="Budget Planner" onBack={() => actions.go('dashboard')} />
-      <div style={{ fontSize: 13, color: '#8a7f68', marginTop: 8, lineHeight: 1.5 }}>The 50/30/20 rule on your {inr(salary)} take-home.</div>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ flexGrow: 1 }}>
+      <ScreenTransition style={{ padding: 24, paddingTop: 8, paddingBottom: 40 }}>
+        <BackHeader title="Budget Planner" onBack={() => navigation.goBack()} />
+        <Text style={{ fontSize: 13, color: colors.inkMuted, marginTop: 8, lineHeight: 19 }}>The 50/30/20 rule on your {inr(salary)} take-home.</Text>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 22 }}>
-        <BudgetCard label="Needs · 50%" amount={inr(needs)} note="Rent, EMIs, groceries, bills, transport" bg="#eaf1e4" fg="#2f4a34" sub="#5a7d4f" />
-        <BudgetCard label="Wants · 30%" amount={inr(wants)} note="Dining, shopping, travel, subscriptions" bg="#f6ecd9" fg="#a5702a" sub="#b58b48" />
-        <BudgetCard label="Savings · 20%" amount={inr(saveTarget)} note="SIP, emergency fund, goals" bg="#e4eef2" fg="#3d6d84" sub="#5a8ba3" />
-      </div>
+        <View style={{ gap: 12, marginTop: 22 }}>
+          <BudgetCard label="Needs · 50%" amount={inr(needs)} note="Rent, EMIs, groceries, bills, transport" bg={colors.greenPale} fg={colors.green} sub={colors.greenLight} />
+          <BudgetCard label="Wants · 30%" amount={inr(wants)} note="Dining, shopping, travel, subscriptions" bg={colors.peach} fg={colors.brownText} sub={colors.brownMuted} />
+          <BudgetCard label="Savings · 20%" amount={inr(saveTarget)} note="SIP, emergency fund, goals" bg={colors.bluePale} fg={colors.blue} sub={colors.blueMuted} />
+        </View>
 
-      <div style={{ background: '#fff', border: '1px solid #ece3d1', borderRadius: 18, padding: '16px 18px', marginTop: 16 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#8a7f68' }}>HOW YOU'RE ACTUALLY DOING</div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 13.5, color: '#2b2618' }}>
-          <span>Actual saving rate</span>
-          <b style={{ color: verdictColor }}>{asr}%</b>
-        </div>
-        <div style={{ fontSize: 12.5, color: '#8a7f68', marginTop: 8, lineHeight: 1.5 }}>{verdict}</div>
-      </div>
-    </div>
+        <View style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: colors.borderCard, borderRadius: 18, padding: 18, marginTop: 16 }}>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: colors.inkMuted }}>HOW YOU'RE ACTUALLY DOING</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
+            <Text style={{ fontSize: 13.5, color: colors.ink }}>Actual saving rate</Text>
+            <Text style={{ color: verdictColor, fontWeight: '700' }}>{asr}%</Text>
+          </View>
+          <Text style={{ fontSize: 12.5, color: colors.inkMuted, marginTop: 8, lineHeight: 18 }}>{verdict}</Text>
+        </View>
+      </ScreenTransition>
+    </ScrollView>
   );
 }

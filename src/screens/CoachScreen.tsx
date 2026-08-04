@@ -1,83 +1,76 @@
-import type { ChatMessage } from '../lib/types';
-import type { SalaryWiseActions } from '../lib/useSalaryWise';
-
-interface CoachScreenProps {
-  chat: ChatMessage[];
-  chatInput: string;
-  coachTyping: boolean;
-  actions: SalaryWiseActions;
-}
+import { useRef } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
+import ChatBubble from '../components/ChatBubble';
+import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
 
 const CHIPS = ['New or old tax regime?', 'How much home can I afford?', 'Am I saving enough?'];
 
-export default function CoachScreen({ chat, chatInput, coachTyping, actions }: CoachScreenProps) {
+export default function CoachScreen() {
+  const navigation = useNavigation<any>();
+  const { state, actions } = useSalaryWiseContext();
+  const { chat, chatInput, coachTyping } = state;
+  const scrollRef = useRef<ScrollView>(null);
+
   const send = () => actions.sendChat(chatInput);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ flex: 'none', padding: '6px 22px 14px', background: '#f6f1e7', borderBottom: '1px solid #ece3d1', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={() => actions.go('dashboard')} style={{ background: 'none', border: 'none', fontSize: 22, color: '#2b2618', cursor: 'pointer', padding: 0 }}>
-          ←
-        </button>
-        <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#2f4a34', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#e9a23b' }}>✦</div>
-        <div>
-          <div style={{ fontFamily: "'Fraunces',serif", fontSize: 17, fontWeight: 600, color: '#2b2618' }}>Money Coach</div>
-          <div style={{ fontSize: 11, color: '#5a7d4f', fontWeight: 600 }}>● Online · rule-based demo</div>
-        </div>
-      </div>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={{ paddingHorizontal: 22, paddingTop: 6, paddingBottom: 14, backgroundColor: colors.cream, borderBottomWidth: 1, borderBottomColor: colors.borderCard, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Pressable onPress={() => navigation.navigate('Dashboard')} hitSlop={10}>
+          <Text style={{ fontSize: 22, color: colors.ink }}>←</Text>
+        </Pressable>
+        <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 18, color: colors.amber }}>✦</Text>
+        </View>
+        <View>
+          <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 17, color: colors.ink }}>Money Coach</Text>
+          <Text style={{ fontSize: 11, color: colors.greenLight, fontWeight: '600' }}>● Online · rule-based demo</Text>
+        </View>
+      </View>
 
-      <div className="sw-scroll" style={{ flex: 1, overflowY: 'auto', padding: '18px 18px 8px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {chat.map((m, i) =>
-          m.role === 'user' ? (
-            <div
-              key={i}
-              className="sw-msg"
-              style={{ alignSelf: 'flex-end', maxWidth: '80%', background: '#2f4a34', color: '#f4f0e6', border: 'none', padding: '11px 14px', borderRadius: 16, fontSize: 13.5, lineHeight: 1.5, borderBottomRightRadius: 5 }}
-            >
-              {m.text}
-            </div>
-          ) : (
-            <div
-              key={i}
-              className="sw-msg"
-              style={{ alignSelf: 'flex-start', maxWidth: '80%', background: '#fff', color: '#2b2618', border: '1px solid #ece3d1', padding: '11px 14px', borderRadius: 16, fontSize: 13.5, lineHeight: 1.5, borderBottomLeftRadius: 5 }}
-            >
-              {m.text}
-            </div>
-          )
-        )}
-        {coachTyping && (
-          <div style={{ alignSelf: 'flex-start', background: '#fff', border: '1px solid #ece3d1', padding: '12px 16px', borderRadius: 16, fontSize: 15, color: '#9a8f78' }}>•••</div>
-        )}
-      </div>
-
-      <div style={{ flex: 'none', padding: '6px 14px 4px', display: 'flex', gap: 8, overflowX: 'auto' }}>
-        {CHIPS.map((c) => (
-          <button
-            key={c}
-            onClick={() => actions.sendChat(c)}
-            style={{ flex: 'none', whiteSpace: 'nowrap', border: '1px solid #e0d6c2', background: '#fffdf8', color: '#5a7d4f', borderRadius: 20, padding: '8px 13px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-          >
-            {c}
-          </button>
+      <ScrollView
+        ref={scrollRef}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 18, paddingTop: 18, paddingBottom: 8, gap: 12 }}
+        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+      >
+        {chat.map((m, i) => (
+          <ChatBubble key={i} message={m} />
         ))}
-      </div>
+        {coachTyping && (
+          <View style={{ alignSelf: 'flex-start', backgroundColor: '#fff', borderWidth: 1, borderColor: colors.borderCard, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 16 }}>
+            <Text style={{ fontSize: 15, color: colors.tan }}>•••</Text>
+          </View>
+        )}
+      </ScrollView>
 
-      <div style={{ flex: 'none', padding: '10px 16px 16px', display: 'flex', gap: 9, alignItems: 'center', background: '#f6f1e7' }}>
-        <input
-          className="sw-ti"
-          style={{ flex: 1, borderRadius: 22, padding: '12px 16px' }}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 6, paddingBottom: 4, gap: 8 }}>
+        {CHIPS.map((c) => (
+          <Pressable
+            key={c}
+            onPress={() => actions.sendChat(c)}
+            style={{ borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 20, paddingHorizontal: 13, paddingVertical: 8 }}
+          >
+            <Text style={{ color: colors.greenLight, fontSize: 12, fontWeight: '600' }}>{c}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+
+      <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 16, flexDirection: 'row', gap: 9, alignItems: 'center', backgroundColor: colors.cream }}>
+        <TextInput
+          style={{ flex: 1, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, fontSize: 15, color: colors.ink }}
           value={chatInput}
-          onChange={(e) => actions.setChatInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') send();
-          }}
+          onChangeText={actions.setChatInput}
+          onSubmitEditing={send}
           placeholder="Ask about money…"
         />
-        <button onClick={send} style={{ width: 46, height: 46, flex: 'none', borderRadius: '50%', background: '#2f4a34', color: '#e9a23b', border: 'none', fontSize: 18, cursor: 'pointer' }}>
-          ↑
-        </button>
-      </div>
-    </div>
+        <Pressable onPress={send} style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 18, color: colors.amber }}>↑</Text>
+        </Pressable>
+      </View>
+    </KeyboardAvoidingView>
   );
 }

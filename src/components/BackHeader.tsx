@@ -1,3 +1,7 @@
+import { Pressable, Text, View } from 'react-native';
+import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
+
 interface BackHeaderProps {
   title: string;
   onBack: () => void;
@@ -5,11 +9,11 @@ interface BackHeaderProps {
 
 export default function BackHeader({ title, onBack }: BackHeaderProps) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingTop: 4 }}>
-      <button onClick={onBack} style={{ background: 'none', border: 'none', fontSize: 22, color: '#2b2618', cursor: 'pointer', padding: 0 }}>
-        ←
-      </button>
-      <div style={{ fontFamily: "'Fraunces',serif", fontSize: 22, fontWeight: 600, color: '#2b2618' }}>{title}</div>
-    </div>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 4 }}>
+      <Pressable onPress={onBack} hitSlop={10}>
+        <Text style={{ fontSize: 22, color: colors.ink }}>←</Text>
+      </Pressable>
+      <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 22, color: colors.ink }}>{title}</Text>
+    </View>
   );
 }

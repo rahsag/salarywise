@@ -1,17 +1,3 @@
-export type Screen =
-  | 'signup'
-  | 'otp'
-  | 'profile'
-  | 'income'
-  | 'score'
-  | 'dashboard'
-  | 'budget'
-  | 'emi'
-  | 'sip'
-  | 'afford'
-  | 'tax'
-  | 'coach';
-
 export type CityTier = 'Metro' | 'Tier-2' | 'Tier-3';
 
 export interface ChatMessage {
@@ -20,8 +6,6 @@ export interface ChatMessage {
 }
 
 export interface AppState {
-  screen: Screen;
-
   name: string;
   mobile: string;
   email: string;
@@ -62,7 +46,6 @@ export interface AppState {
 }
 
 export const initialState: AppState = {
-  screen: 'signup',
   name: '',
   mobile: '',
   email: '',
@@ -106,3 +89,8 @@ export const initialState: AppState = {
   chatInput: '',
   coachTyping: false,
 };
+
+// Fields that should not be restored verbatim from persisted storage —
+// either meaningless after a restart (otp) or would show stale mid-animation
+// state if replayed (animScore, coachTyping).
+export const NON_PERSISTED_KEYS: (keyof AppState)[] = ['animScore', 'coachTyping', 'otp'];

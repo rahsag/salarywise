@@ -1,19 +1,43 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { coachReply, computeScore } from './finance';
-import { initialState, type AppState, type CityTier, type Screen } from './types';
+import { loadState, saveState } from './storage';
+import { initialState, type AppState, type CityTier } from './types';
 
 export function useSalaryWise() {
   const [state, setState] = useState<AppState>(initialState);
+  const [hydrated, setHydrated] = useState(false);
   const stateRef = useRef(state);
   stateRef.current = state;
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadState().then((saved) => {
+      if (cancelled) return;
+      if (saved) setState((cur) => ({ ...cur, ...saved }));
+      setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      saveState(stateRef.current);
+    }, 400);
+  }, [state, hydrated]);
 
   useEffect(
     () => () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     },
     []
   );
@@ -33,14 +57,6 @@ export function useSalaryWise() {
       setState((cur) => ({ ...cur, animScore: n }));
     }, 32);
   }, []);
-
-  const go = useCallback(
-    (screen: Screen) => {
-      setState((cur) => ({ ...cur, screen }));
-      if (screen === 'score') startScore();
-    },
-    [startScore]
-  );
 
   const sendChat = useCallback((text: string) => {
     const t = text.trim();
@@ -84,7 +100,7 @@ export function useSalaryWise() {
     setState((cur) => ({ ...cur, [key]: value }));
 
   const actions = {
-    go,
+    startScore,
     setName: set('name'),
     setMobile: set('mobile'),
     setEmail: set('email'),
@@ -120,7 +136,7 @@ export function useSalaryWise() {
     sendChat,
   };
 
-  return { state, actions };
+  return { state, actions, hydrated };
 }
 
 export type SalaryWiseActions = ReturnType<typeof useSalaryWise>['actions'];
