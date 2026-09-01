@@ -1,8 +1,10 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { Confirmation } from '../lib/firebaseAuth';
 
 export type OnboardingStackParamList = {
   Signup: undefined;
-  Otp: undefined;
+  Login: undefined;
+  Otp: { confirmation: Confirmation };
   Profile: undefined;
   Income: undefined;
   Score: undefined;
@@ -21,6 +23,7 @@ export type RootStackParamList = {
   Sip: undefined;
   Afford: undefined;
   Tax: undefined;
+  Upgrade: undefined;
 };
 
 declare global {

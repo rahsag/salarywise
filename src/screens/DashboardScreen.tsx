@@ -44,6 +44,7 @@ function ToolButton({ icon, bg, title, subtitle, onPress }: ToolButtonProps) {
 export default function DashboardScreen() {
   const navigation = useNavigation<any>();
   const { state } = useSalaryWiseContext();
+  const { proUnlocked } = state;
   const { name, salary, rent, emi, expenses, sip } = state;
 
   const sc = computeScore(salary, rent, emi, expenses, sip);
@@ -126,7 +127,7 @@ export default function DashboardScreen() {
         </View>
 
         <Pressable
-          onPress={() => navigation.navigate('Tax')}
+          onPress={() => navigation.navigate(proUnlocked ? 'Tax' : 'Upgrade')}
           style={{ width: '100%', marginTop: 11, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.borderCard, borderRadius: 18, padding: 16, flexDirection: 'row', gap: 12, alignItems: 'center' }}
         >
           <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.rose, alignItems: 'center', justifyContent: 'center' }}>
@@ -136,9 +137,11 @@ export default function DashboardScreen() {
             <Text style={{ fontSize: 14, fontWeight: '700', color: colors.ink }}>Tax Planner & Salary Optimizer</Text>
             <Text style={{ fontSize: 11, color: colors.tan }}>New vs old regime · ranked savings</Text>
           </View>
-          <View style={{ backgroundColor: colors.amberPale, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 20 }}>
-            <Text style={{ fontSize: 12, fontWeight: '800', color: colors.amber }}>PRO</Text>
-          </View>
+          {!proUnlocked && (
+            <View style={{ backgroundColor: colors.amberPale, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 20 }}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.amber }}>PRO</Text>
+            </View>
+          )}
         </Pressable>
 
         <Pressable

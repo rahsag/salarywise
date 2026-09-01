@@ -19,13 +19,13 @@ const inputStyle = {
   backgroundColor: colors.card,
 };
 
-export default function SignupScreen() {
+export default function LoginScreen() {
   const navigation = useNavigation<any>();
   const { state, actions } = useSalaryWiseContext();
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleCreateAccount = async () => {
+  const handleLogin = async () => {
     const phoneE164 = toE164(state.mobile);
     if (!phoneE164) {
       setError('Enter a valid 10-digit mobile number.');
@@ -46,36 +46,19 @@ export default function SignupScreen() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ flexGrow: 1 }}>
       <ScreenTransition style={{ padding: 26, paddingTop: 14, paddingBottom: 40 }}>
-        <View
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: 16,
-            backgroundColor: colors.green,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 26, color: colors.amber }}>S</Text>
-        </View>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
+          <Text style={{ fontSize: 22, color: colors.ink }}>←</Text>
+        </Pressable>
         <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 32, color: colors.ink, marginTop: 22, lineHeight: 35, letterSpacing: -0.3 }}>
-          Money, made{'\n'}manageable.
+          Welcome back.
         </Text>
         <Text style={{ fontSize: 14, color: colors.inkMuted, marginTop: 10, lineHeight: 21 }}>
-          Budgeting, tax, loans and investing for salaried India — in one calm place.
+          Log in with the mobile number on your account.
         </Text>
         <View style={{ gap: 12, marginTop: 30 }}>
           <View>
-            <Text style={fieldLabelStyle}>Full name</Text>
-            <TextInput style={inputStyle} value={state.name} onChangeText={actions.setName} placeholder="Rahul Sharma" />
-          </View>
-          <View>
             <Text style={fieldLabelStyle}>Mobile number</Text>
             <TextInput style={inputStyle} value={state.mobile} onChangeText={actions.setMobile} keyboardType="numeric" placeholder="+91 98765 43210" />
-          </View>
-          <View>
-            <Text style={fieldLabelStyle}>Email</Text>
-            <TextInput style={inputStyle} value={state.email} onChangeText={actions.setEmail} placeholder="rahul@email.com" autoCapitalize="none" />
           </View>
         </View>
         {error && (
@@ -84,16 +67,16 @@ export default function SignupScreen() {
           </View>
         )}
         <Pressable
-          onPress={handleCreateAccount}
+          onPress={handleLogin}
           disabled={sending}
           style={{ width: '100%', marginTop: 26, backgroundColor: colors.green, borderRadius: 16, padding: 16, alignItems: 'center', opacity: sending ? 0.7 : 1 }}
         >
-          {sending ? <ActivityIndicator color={colors.cream} /> : <Text style={{ color: colors.cream, fontSize: 15, fontWeight: '700' }}>Create account</Text>}
+          {sending ? <ActivityIndicator color={colors.cream} /> : <Text style={{ color: colors.cream, fontSize: 15, fontWeight: '700' }}>Send code</Text>}
         </Pressable>
         <Text style={{ textAlign: 'center', fontSize: 12.5, color: colors.tanLight, marginTop: 16 }}>
-          Already have an account?{' '}
-          <Text style={{ color: colors.greenLight, fontWeight: '700' }} onPress={() => navigation.navigate('Login')}>
-            Log in
+          New here?{' '}
+          <Text style={{ color: colors.greenLight, fontWeight: '700' }} onPress={() => navigation.navigate('Signup')}>
+            Create account
           </Text>
         </Text>
       </ScreenTransition>

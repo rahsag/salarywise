@@ -1,11 +1,17 @@
+import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
+import { toE164 } from './firebaseAuth';
 import { coachReply, computeScore } from './finance';
+import { cancelScheduledRemoteSave, loadRemoteState, scheduleRemoteSave, subscribeProStatus } from './firestoreSync';
+import { purchasePro as purchaseProFlow } from './payments';
 import { loadState, saveState } from './storage';
 import { initialState, type AppState, type CityTier } from './types';
 
 export function useSalaryWise() {
   const [state, setState] = useState<AppState>(initialState);
   const [hydrated, setHydrated] = useState(false);
+  const [uid, setUid] = useState<string | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -26,12 +32,46 @@ export function useSalaryWise() {
   }, []);
 
   useEffect(() => {
+    // @react-native-firebase has no web implementation — it initializes natively
+    // from google-services.json/GoogleService-Info.plist at build time, which the
+    // web bundle has no equivalent of. Skip auth/Firestore sync entirely on web.
+    if (Platform.OS === 'web') return;
+    return onAuthStateChanged(getAuth(), (user) => setUid(user?.uid ?? null));
+  }, []);
+
+  useEffect(() => {
+    if (!uid) return;
+    let cancelled = false;
+    loadRemoteState(uid).then((remote) => {
+      if (cancelled) return;
+      if (remote) {
+        setState((cur) => ({ ...cur, ...remote }));
+      } else {
+        // No doc yet — first-time signup. Seed it with whatever state we have so far.
+        scheduleRemoteSave(uid, stateRef.current);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
+
+  useEffect(() => {
+    if (!uid) return;
+    return subscribeProStatus(uid, (proUnlocked) => {
+      setState((cur) => (cur.proUnlocked === proUnlocked ? cur : { ...cur, proUnlocked }));
+    });
+  }, [uid]);
+
+  useEffect(() => {
     if (!hydrated) return;
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
       saveState(stateRef.current);
+      if (uid) scheduleRemoteSave(uid, stateRef.current);
     }, 400);
-  }, [state, hydrated]);
+    return () => cancelScheduledRemoteSave();
+  }, [state, hydrated, uid]);
 
   useEffect(
     () => () => {
@@ -99,6 +139,14 @@ export function useSalaryWise() {
   const set = <K extends keyof AppState>(key: K) => (value: AppState[K]) =>
     setState((cur) => ({ ...cur, [key]: value }));
 
+  const purchasePro = useCallback(async () => {
+    const s = stateRef.current;
+    await purchaseProFlow(s.name, s.email, toE164(s.mobile) ?? '');
+    // The Cloud Function already wrote proUnlocked to Firestore via the Admin
+    // SDK — this just reflects it locally without waiting on the next sync.
+    setState((cur) => ({ ...cur, proUnlocked: true }));
+  }, []);
+
   const actions = {
     startScore,
     setName: set('name'),
@@ -134,6 +182,7 @@ export function useSalaryWise() {
     setTaxHra: set('taxHra'),
     setChatInput: set('chatInput'),
     sendChat,
+    purchasePro,
   };
 
   return { state, actions, hydrated };

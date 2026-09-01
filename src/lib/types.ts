@@ -43,6 +43,8 @@ export interface AppState {
   chat: ChatMessage[];
   chatInput: string;
   coachTyping: boolean;
+
+  proUnlocked: boolean;
 }
 
 export const initialState: AppState = {
@@ -88,6 +90,8 @@ export const initialState: AppState = {
   ],
   chatInput: '',
   coachTyping: false,
+
+  proUnlocked: false,
 };
 
 // Fields that should not be restored verbatim from persisted storage —

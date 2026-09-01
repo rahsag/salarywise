@@ -6,6 +6,7 @@ import EmiScreen from '../screens/EmiScreen';
 import SipScreen from '../screens/SipScreen';
 import AffordScreen from '../screens/AffordScreen';
 import TaxScreen from '../screens/TaxScreen';
+import UpgradeScreen from '../screens/UpgradeScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -20,6 +21,7 @@ export default function RootNavigator() {
       <Stack.Screen name="Sip" component={SipScreen} />
       <Stack.Screen name="Afford" component={AffordScreen} />
       <Stack.Screen name="Tax" component={TaxScreen} />
+      <Stack.Screen name="Upgrade" component={UpgradeScreen} />
     </Stack.Navigator>
   );
 }
