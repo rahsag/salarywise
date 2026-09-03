@@ -43,9 +43,10 @@ function ToolButton({ icon, bg, title, subtitle, onPress }: ToolButtonProps) {
 
 export default function DashboardScreen() {
   const navigation = useNavigation<any>();
-  const { state } = useSalaryWiseContext();
+  const { state, monthlyExpenseTotal } = useSalaryWiseContext();
   const { proUnlocked } = state;
-  const { name, salary, rent, emi, expenses, sip } = state;
+  const { name, salary, rent, emi, sip } = state;
+  const expenses = monthlyExpenseTotal > 0 ? monthlyExpenseTotal : state.expenses;
 
   const sc = computeScore(salary, rent, emi, expenses, sip);
   const band = scoreBand(sc.total);
@@ -66,9 +67,12 @@ export default function DashboardScreen() {
             <Text style={{ fontSize: 13, color: colors.tan, fontWeight: '600' }}>Tuesday, 3 Aug</Text>
             <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 26, color: colors.ink, letterSpacing: -0.3 }}>{greetName}</Text>
           </View>
-          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#e5dcc7', alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable
+            onPress={() => navigation.navigate('Account')}
+            style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#e5dcc7', alignItems: 'center', justifyContent: 'center' }}
+          >
             <Text style={{ color: colors.greenLight, fontWeight: '700', fontFamily: fonts.serifSemiBold, fontSize: 18 }}>{initial}</Text>
-          </View>
+          </Pressable>
         </View>
 
         <View style={{ marginTop: 16, backgroundColor: colors.green, borderRadius: 26, padding: 22, overflow: 'hidden' }}>
@@ -124,6 +128,7 @@ export default function DashboardScreen() {
           <ToolButton icon="🏦" bg={colors.peach} title="EMI" subtitle="Loan calc" onPress={() => navigation.navigate('Emi')} />
           <ToolButton icon="📈" bg={colors.purplePale} title="SIP" subtitle="Grow wealth" onPress={() => navigation.navigate('Sip')} />
           <ToolButton icon="🏠" bg={colors.bluePale} title="Home" subtitle="Affordability" onPress={() => navigation.navigate('Afford')} />
+          <ToolButton icon="🧺" bg={colors.amberPale} title="Expenses" subtitle="Log a spend" onPress={() => navigation.navigate('Expenses')} />
         </View>
 
         <Pressable

@@ -73,10 +73,6 @@ export default function SignupScreen() {
             <TextInput style={inputStyle} value={state.name} onChangeText={actions.setName} placeholder="Rahul Sharma" />
           </View>
           <View>
-            <Text style={fieldLabelStyle}>Mobile number</Text>
-            <TextInput style={inputStyle} value={state.mobile} onChangeText={actions.setMobile} keyboardType="numeric" placeholder="+91 98765 43210" />
-          </View>
-          <View>
             <Text style={fieldLabelStyle}>Email</Text>
             <TextInput style={inputStyle} value={state.email} onChangeText={actions.setEmail} placeholder="rahul@email.com" autoCapitalize="none" keyboardType="email-address" />
           </View>

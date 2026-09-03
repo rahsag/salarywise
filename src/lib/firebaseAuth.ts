@@ -3,7 +3,9 @@ import {
   getAuth,
   reload,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  signOut,
 } from '@react-native-firebase/auth';
 
 function friendlyAuthError(err: unknown): string {
@@ -63,9 +65,18 @@ export async function refreshEmailVerified(): Promise<boolean> {
   return auth.currentUser?.emailVerified ?? false;
 }
 
-export function toE164(rawMobile: string): string | null {
-  const digits = rawMobile.replace(/\D/g, '').replace(/^0+/, '');
-  const last10 = digits.slice(-10);
-  if (last10.length !== 10) return null;
-  return `+91${last10}`;
+export async function signOutUser(): Promise<void> {
+  await signOut(getAuth());
+}
+
+export async function resetPassword(email: string): Promise<void> {
+  try {
+    await sendPasswordResetEmail(getAuth(), email);
+  } catch (err) {
+    // Don't reveal whether an account exists for this email — treat it the
+    // same as success so the UI can't be used to enumerate registered users.
+    const code = (err as { code?: string })?.code ?? '';
+    if (code === 'auth/user-not-found') return;
+    throw new Error(friendlyAuthError(err));
+  }
 }

@@ -24,7 +24,7 @@ function friendlyPurchaseError(err: unknown): string {
   return 'Payment failed. Please try again.';
 }
 
-export async function purchasePro(name: string, email: string, contact: string): Promise<void> {
+export async function purchasePro(name: string, email: string): Promise<void> {
   const functions = getFunctions(getApp(), FUNCTIONS_REGION);
 
   try {
@@ -38,7 +38,7 @@ export async function purchasePro(name: string, email: string, contact: string):
       currency: order.currency,
       name: 'SalaryWise',
       description: 'Pro unlock — Tax Planner & Salary Optimizer',
-      prefill: { name, email, contact },
+      prefill: { name, email },
       theme: { color: '#2f4a34' },
     });
 

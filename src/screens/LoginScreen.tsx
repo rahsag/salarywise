@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
-import { signInWithEmail } from '../lib/firebaseAuth';
+import { resetPassword, signInWithEmail } from '../lib/firebaseAuth';
 import { loadRemoteState } from '../lib/firestoreSync';
 import { getAuth } from '@react-native-firebase/auth';
 import ScreenTransition from '../components/ScreenTransition';
@@ -26,6 +26,26 @@ export default function LoginScreen() {
   const { state, actions } = useSalaryWiseContext();
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetSending, setResetSending] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
+  const handleForgotPassword = async () => {
+    if (!/^\S+@\S+\.\S+$/.test(state.email)) {
+      setError('Enter your email above first, then tap "Forgot password?"');
+      return;
+    }
+    setError(null);
+    setResetSent(false);
+    setResetSending(true);
+    try {
+      await resetPassword(state.email);
+      setResetSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setResetSending(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!/^\S+@\S+\.\S+$/.test(state.email)) {
@@ -76,6 +96,18 @@ export default function LoginScreen() {
             <TextInput style={inputStyle} value={state.password} onChangeText={actions.setPassword} placeholder="Your password" secureTextEntry autoCapitalize="none" />
           </View>
         </View>
+        <Pressable onPress={handleForgotPassword} disabled={resetSending} hitSlop={8} style={{ alignSelf: 'flex-end', marginTop: 10 }}>
+          <Text style={{ fontSize: 12.5, color: colors.greenLight, fontWeight: '700' }}>
+            {resetSending ? 'Sending…' : 'Forgot password?'}
+          </Text>
+        </Pressable>
+        {resetSent && (
+          <View style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, marginTop: 10 }}>
+            <Text style={{ fontSize: 12, color: colors.inkMuted, lineHeight: 17 }}>
+              If an account exists for that email, a password reset link has been sent.
+            </Text>
+          </View>
+        )}
         {error && (
           <View style={{ backgroundColor: colors.amberPale, borderWidth: 1, borderColor: colors.amberBorder, borderRadius: 12, padding: 12, marginTop: 16 }}>
             <Text style={{ fontSize: 12, color: colors.amberText, lineHeight: 17 }}>{error}</Text>

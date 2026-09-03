@@ -7,6 +7,8 @@ import SipScreen from '../screens/SipScreen';
 import AffordScreen from '../screens/AffordScreen';
 import TaxScreen from '../screens/TaxScreen';
 import UpgradeScreen from '../screens/UpgradeScreen';
+import AccountScreen from '../screens/AccountScreen';
+import ExpensesScreen from '../screens/ExpensesScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -22,6 +24,8 @@ export default function RootNavigator() {
       <Stack.Screen name="Afford" component={AffordScreen} />
       <Stack.Screen name="Tax" component={TaxScreen} />
       <Stack.Screen name="Upgrade" component={UpgradeScreen} />
+      <Stack.Screen name="Account" component={AccountScreen} />
+      <Stack.Screen name="Expenses" component={ExpensesScreen} />
     </Stack.Navigator>
   );
 }

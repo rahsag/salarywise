@@ -1,8 +1,8 @@
 import { useNavigation } from '@react-navigation/native';
-import Slider from '@react-native-community/slider';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
 import ScreenTransition from '../components/ScreenTransition';
+import SliderRow from '../components/SliderRow';
 import StepDots from '../components/StepDots';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -33,21 +33,7 @@ export default function ProfileScreen() {
         <Text style={{ fontSize: 14, color: colors.inkMuted, marginTop: 6 }}>This tailors your plan and score.</Text>
 
         <View style={{ marginTop: 26 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.label }}>Age</Text>
-            <Text style={{ color: colors.ink, fontSize: 15, fontWeight: '700' }}>{state.age} yrs</Text>
-          </View>
-          <Slider
-            minimumValue={21}
-            maximumValue={60}
-            step={1}
-            value={state.age}
-            onValueChange={actions.setAge}
-            minimumTrackTintColor={colors.green}
-            maximumTrackTintColor="#e5dcc7"
-            thumbTintColor={colors.green}
-            style={{ width: '100%', marginTop: 12, height: 22 }}
-          />
+          <SliderRow label="Age" display={`${state.age} yrs`} min={21} max={60} step={1} value={state.age} onChange={actions.setAge} />
         </View>
 
         <View style={{ marginTop: 24 }}>

@@ -21,8 +21,9 @@ function BudgetCard({ label, amount, note, bg, fg, sub }: { label: string; amoun
 
 export default function BudgetScreen() {
   const navigation = useNavigation<any>();
-  const { state } = useSalaryWiseContext();
-  const { salary, rent, emi, expenses } = state;
+  const { state, monthlyExpenseTotal } = useSalaryWiseContext();
+  const { salary, rent, emi } = state;
+  const expenses = monthlyExpenseTotal > 0 ? monthlyExpenseTotal : state.expenses;
 
   const needs = salary * 0.5;
   const wants = salary * 0.3;

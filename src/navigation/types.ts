@@ -23,6 +23,8 @@ export type RootStackParamList = {
   Afford: undefined;
   Tax: undefined;
   Upgrade: undefined;
+  Account: undefined;
+  Expenses: undefined;
 };
 
 declare global {

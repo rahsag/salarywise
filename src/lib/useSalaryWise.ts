@@ -1,19 +1,28 @@
 import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform } from 'react-native';
-import { toE164 } from './firebaseAuth';
+import { addExpense as addExpenseRemote, deleteExpense as deleteExpenseRemote, subscribeExpenses, type ExpenseEntry } from './expenses';
 import { coachReply, computeScore } from './finance';
+import { signOutUser } from './firebaseAuth';
 import { cancelScheduledRemoteSave, loadRemoteState, scheduleRemoteSave, subscribeProStatus } from './firestoreSync';
 import { purchasePro as purchaseProFlow } from './payments';
-import { loadState, saveState } from './storage';
+import { clearState, loadState, saveState } from './storage';
 import { initialState, type AppState, type CityTier } from './types';
 
 export function useSalaryWise() {
   const [state, setState] = useState<AppState>(initialState);
   const [hydrated, setHydrated] = useState(false);
   const [uid, setUid] = useState<string | null>(null);
+  const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
   const stateRef = useRef(state);
   stateRef.current = state;
+
+  const monthlyExpenseTotal = useMemo(() => {
+    const thisMonth = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
+    return expenses.filter((e) => e.date.startsWith(thisMonth)).reduce((sum, e) => sum + e.amount, 0);
+  }, [expenses]);
+  const monthlyExpenseTotalRef = useRef(monthlyExpenseTotal);
+  monthlyExpenseTotalRef.current = monthlyExpenseTotal;
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -64,6 +73,14 @@ export function useSalaryWise() {
   }, [uid]);
 
   useEffect(() => {
+    if (!uid) {
+      setExpenses([]);
+      return;
+    }
+    return subscribeExpenses(uid, setExpenses);
+  }, [uid]);
+
+  useEffect(() => {
     if (!hydrated) return;
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
@@ -84,7 +101,8 @@ export function useSalaryWise() {
 
   const startScore = useCallback(() => {
     const s = stateRef.current;
-    const target = computeScore(s.salary, s.rent, s.emi, s.expenses, s.sip).total;
+    const effectiveExpenses = monthlyExpenseTotalRef.current > 0 ? monthlyExpenseTotalRef.current : s.expenses;
+    const target = computeScore(s.salary, s.rent, s.emi, effectiveExpenses, s.sip).total;
     setState((cur) => ({ ...cur, animScore: 0 }));
     if (intervalRef.current) clearInterval(intervalRef.current);
     let n = 0;
@@ -110,11 +128,12 @@ export function useSalaryWise() {
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
       const s = stateRef.current;
+      const effectiveExpenses = monthlyExpenseTotalRef.current > 0 ? monthlyExpenseTotalRef.current : s.expenses;
       const reply = coachReply(t, {
         salary: s.salary,
         rent: s.rent,
         emi: s.emi,
-        expenses: s.expenses,
+        expenses: effectiveExpenses,
         sip: s.sip,
         sipAmt: s.sipAmt,
         sipR: s.sipR,
@@ -126,7 +145,7 @@ export function useSalaryWise() {
         affDown: s.affDown,
         affRate: s.affRate,
         affTenure: s.affTenure,
-        scoreTotal: computeScore(s.salary, s.rent, s.emi, s.expenses, s.sip).total,
+        scoreTotal: computeScore(s.salary, s.rent, s.emi, effectiveExpenses, s.sip).total,
       });
       setState((cur) => ({
         ...cur,
@@ -141,16 +160,37 @@ export function useSalaryWise() {
 
   const purchasePro = useCallback(async () => {
     const s = stateRef.current;
-    await purchaseProFlow(s.name, s.email, toE164(s.mobile) ?? '');
+    await purchaseProFlow(s.name, s.email);
     // The Cloud Function already wrote proUnlocked to Firestore via the Admin
     // SDK — this just reflects it locally without waiting on the next sync.
     setState((cur) => ({ ...cur, proUnlocked: true }));
   }, []);
 
+  const addExpense = useCallback(
+    (entry: Omit<ExpenseEntry, 'id'>) => {
+      if (!uid) return Promise.resolve();
+      return addExpenseRemote(uid, entry);
+    },
+    [uid]
+  );
+
+  const deleteExpense = useCallback(
+    (id: string) => {
+      if (!uid) return Promise.resolve();
+      return deleteExpenseRemote(uid, id);
+    },
+    [uid]
+  );
+
+  const signOut = useCallback(async () => {
+    await signOutUser();
+    await clearState();
+    setState(initialState);
+  }, []);
+
   const actions = {
     startScore,
     setName: set('name'),
-    setMobile: set('mobile'),
     setEmail: set('email'),
     setPassword: set('password'),
     setAge: set('age'),
@@ -178,9 +218,12 @@ export function useSalaryWise() {
     setChatInput: set('chatInput'),
     sendChat,
     purchasePro,
+    addExpense,
+    deleteExpense,
+    signOut,
   };
 
-  return { state, actions, hydrated };
+  return { state, actions, hydrated, expenses, monthlyExpenseTotal };
 }
 
 export type SalaryWiseActions = ReturnType<typeof useSalaryWise>['actions'];

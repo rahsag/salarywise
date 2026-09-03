@@ -24,3 +24,11 @@ export async function saveState(state: AppState): Promise<void> {
     // best-effort persistence — ignore write failures
   }
 }
+
+export async function clearState(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // best-effort — ignore failures
+  }
+}

@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import Slider from '@react-native-community/slider';
-import { Text, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 import { colors } from '../theme/colors';
 
 interface SliderRowProps {
@@ -14,11 +15,34 @@ interface SliderRowProps {
 }
 
 export default function SliderRow({ label, display, valueColor = colors.ink, min, max, step, value, onChange }: SliderRowProps) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState('');
+
+  const commit = () => {
+    setEditing(false);
+    const parsed = parseFloat(text);
+    if (Number.isFinite(parsed)) {
+      onChange(Math.min(max, Math.max(min, parsed)));
+    }
+  };
+
   return (
     <View>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={{ fontSize: 13, fontWeight: '600', color: colors.label }}>{label}</Text>
-        <Text style={{ fontWeight: '700', color: valueColor, fontSize: 15 }}>{display}</Text>
+        <TextInput
+          value={editing ? text : display}
+          onFocus={() => {
+            setText(String(value));
+            setEditing(true);
+          }}
+          onChangeText={setText}
+          onBlur={commit}
+          onSubmitEditing={commit}
+          keyboardType="decimal-pad"
+          selectTextOnFocus
+          style={{ fontWeight: '700', color: valueColor, fontSize: 15, textAlign: 'right', minWidth: 80, padding: 0 }}
+        />
       </View>
       <Slider
         minimumValue={min}

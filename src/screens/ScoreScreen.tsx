@@ -27,8 +27,9 @@ function ScoreBar({ label, points, widthPct }: { label: string; points: string; 
 export default function ScoreScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { state, actions } = useSalaryWiseContext();
-  const { name, salary, rent, emi, expenses, sip, animScore } = state;
+  const { state, actions, monthlyExpenseTotal } = useSalaryWiseContext();
+  const { name, salary, rent, emi, sip, animScore } = state;
+  const expenses = monthlyExpenseTotal > 0 ? monthlyExpenseTotal : state.expenses;
 
   useFocusEffect(
     useCallback(() => {

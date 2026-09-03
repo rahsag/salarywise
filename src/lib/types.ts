@@ -7,7 +7,6 @@ export interface ChatMessage {
 
 export interface AppState {
   name: string;
-  mobile: string;
   email: string;
   password: string;
 
@@ -49,7 +48,6 @@ export interface AppState {
 
 export const initialState: AppState = {
   name: '',
-  mobile: '',
   email: '',
   password: '',
 
