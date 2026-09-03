@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
-import { sendOtp, toE164 } from '../lib/firebaseAuth';
+import { signInWithEmail } from '../lib/firebaseAuth';
+import { loadRemoteState } from '../lib/firestoreSync';
+import { getAuth } from '@react-native-firebase/auth';
 import ScreenTransition from '../components/ScreenTransition';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -26,16 +28,25 @@ export default function LoginScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async () => {
-    const phoneE164 = toE164(state.mobile);
-    if (!phoneE164) {
-      setError('Enter a valid 10-digit mobile number.');
+    if (!/^\S+@\S+\.\S+$/.test(state.email)) {
+      setError('Enter a valid email address.');
       return;
     }
     setError(null);
     setSending(true);
     try {
-      const confirmation = await sendOtp(phoneE164);
-      navigation.navigate('Otp', { confirmation });
+      await signInWithEmail(state.email, state.password);
+      if (!getAuth().currentUser?.emailVerified) {
+        navigation.navigate('VerifyEmail');
+        return;
+      }
+      const uid = getAuth().currentUser?.uid;
+      const remote = uid ? await loadRemoteState(uid) : null;
+      if (remote) {
+        navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+      } else {
+        navigation.navigate('Profile');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
@@ -53,12 +64,16 @@ export default function LoginScreen() {
           Welcome back.
         </Text>
         <Text style={{ fontSize: 14, color: colors.inkMuted, marginTop: 10, lineHeight: 21 }}>
-          Log in with the mobile number on your account.
+          Log in with the email on your account.
         </Text>
         <View style={{ gap: 12, marginTop: 30 }}>
           <View>
-            <Text style={fieldLabelStyle}>Mobile number</Text>
-            <TextInput style={inputStyle} value={state.mobile} onChangeText={actions.setMobile} keyboardType="numeric" placeholder="+91 98765 43210" />
+            <Text style={fieldLabelStyle}>Email</Text>
+            <TextInput style={inputStyle} value={state.email} onChangeText={actions.setEmail} placeholder="rahul@email.com" autoCapitalize="none" keyboardType="email-address" />
+          </View>
+          <View>
+            <Text style={fieldLabelStyle}>Password</Text>
+            <TextInput style={inputStyle} value={state.password} onChangeText={actions.setPassword} placeholder="Your password" secureTextEntry autoCapitalize="none" />
           </View>
         </View>
         {error && (
@@ -71,7 +86,7 @@ export default function LoginScreen() {
           disabled={sending}
           style={{ width: '100%', marginTop: 26, backgroundColor: colors.green, borderRadius: 16, padding: 16, alignItems: 'center', opacity: sending ? 0.7 : 1 }}
         >
-          {sending ? <ActivityIndicator color={colors.cream} /> : <Text style={{ color: colors.cream, fontSize: 15, fontWeight: '700' }}>Send code</Text>}
+          {sending ? <ActivityIndicator color={colors.cream} /> : <Text style={{ color: colors.cream, fontSize: 15, fontWeight: '700' }}>Log in</Text>}
         </Pressable>
         <Text style={{ textAlign: 'center', fontSize: 12.5, color: colors.tanLight, marginTop: 16 }}>
           New here?{' '}

@@ -1,10 +1,9 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { Confirmation } from '../lib/firebaseAuth';
 
 export type OnboardingStackParamList = {
   Signup: undefined;
   Login: undefined;
-  Otp: { confirmation: Confirmation };
+  VerifyEmail: undefined;
   Profile: undefined;
   Income: undefined;
   Score: undefined;

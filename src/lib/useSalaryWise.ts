@@ -152,12 +152,7 @@ export function useSalaryWise() {
     setName: set('name'),
     setMobile: set('mobile'),
     setEmail: set('email'),
-    setOtpDigit: (i: number, v: string) =>
-      setState((cur) => {
-        const otp = [...cur.otp] as AppState['otp'];
-        otp[i] = v.slice(-1);
-        return { ...cur, otp };
-      }),
+    setPassword: set('password'),
     setAge: set('age'),
     setCityTier: (v: CityTier) => set('cityTier')(v),
     depMinus: () => setState((cur) => ({ ...cur, dependents: Math.max(0, cur.dependents - 1) })),

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
-import { sendOtp, toE164 } from '../lib/firebaseAuth';
+import { signUpWithEmail } from '../lib/firebaseAuth';
 import ScreenTransition from '../components/ScreenTransition';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -26,16 +26,19 @@ export default function SignupScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const handleCreateAccount = async () => {
-    const phoneE164 = toE164(state.mobile);
-    if (!phoneE164) {
-      setError('Enter a valid 10-digit mobile number.');
+    if (!/^\S+@\S+\.\S+$/.test(state.email)) {
+      setError('Enter a valid email address.');
+      return;
+    }
+    if (state.password.length < 6) {
+      setError('Password must be at least 6 characters.');
       return;
     }
     setError(null);
     setSending(true);
     try {
-      const confirmation = await sendOtp(phoneE164);
-      navigation.navigate('Otp', { confirmation });
+      await signUpWithEmail(state.email, state.password);
+      navigation.navigate('VerifyEmail');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
@@ -75,7 +78,11 @@ export default function SignupScreen() {
           </View>
           <View>
             <Text style={fieldLabelStyle}>Email</Text>
-            <TextInput style={inputStyle} value={state.email} onChangeText={actions.setEmail} placeholder="rahul@email.com" autoCapitalize="none" />
+            <TextInput style={inputStyle} value={state.email} onChangeText={actions.setEmail} placeholder="rahul@email.com" autoCapitalize="none" keyboardType="email-address" />
+          </View>
+          <View>
+            <Text style={fieldLabelStyle}>Password</Text>
+            <TextInput style={inputStyle} value={state.password} onChangeText={actions.setPassword} placeholder="At least 6 characters" secureTextEntry autoCapitalize="none" />
           </View>
         </View>
         {error && (

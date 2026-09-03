@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { computeScore, scoreBand } from '../lib/finance';
 import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
@@ -25,6 +26,7 @@ function ScoreBar({ label, points, widthPct }: { label: string; points: string; 
 
 export default function ScoreScreen() {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const { state, actions } = useSalaryWiseContext();
   const { name, salary, rent, emi, expenses, sip, animScore } = state;
 
@@ -44,7 +46,7 @@ export default function ScoreScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.green }} contentContainerStyle={{ flexGrow: 1 }}>
-      <View style={{ padding: 26, paddingTop: 20, paddingBottom: 40 }}>
+      <View style={{ padding: 26, paddingTop: 20 + insets.top, paddingBottom: 40 }}>
         <Text style={{ textAlign: 'center', fontSize: 12, fontWeight: '600', letterSpacing: 2, color: colors.greenFaint }}>YOUR FINANCIAL HEALTH SCORE</Text>
         <View style={{ alignItems: 'center', marginTop: 22 }}>
           <Svg width={220} height={220} viewBox="0 0 220 220">

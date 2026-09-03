@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
 import ChatBubble from '../components/ChatBubble';
 import { colors } from '../theme/colors';
@@ -10,6 +11,7 @@ const CHIPS = ['New or old tax regime?', 'How much home can I afford?', 'Am I sa
 
 export default function CoachScreen() {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const { state, actions } = useSalaryWiseContext();
   const { chat, chatInput, coachTyping } = state;
   const scrollRef = useRef<ScrollView>(null);
@@ -18,7 +20,7 @@ export default function CoachScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={{ paddingHorizontal: 22, paddingTop: 6, paddingBottom: 14, backgroundColor: colors.cream, borderBottomWidth: 1, borderBottomColor: colors.borderCard, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <View style={{ paddingHorizontal: 22, paddingTop: 6 + insets.top, paddingBottom: 14, backgroundColor: colors.cream, borderBottomWidth: 1, borderBottomColor: colors.borderCard, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Pressable onPress={() => navigation.navigate('Dashboard')} hitSlop={10}>
           <Text style={{ fontSize: 22, color: colors.ink }}>←</Text>
         </Pressable>

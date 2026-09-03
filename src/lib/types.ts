@@ -9,7 +9,7 @@ export interface AppState {
   name: string;
   mobile: string;
   email: string;
-  otp: [string, string, string, string];
+  password: string;
 
   age: number;
   cityTier: CityTier;
@@ -51,7 +51,7 @@ export const initialState: AppState = {
   name: '',
   mobile: '',
   email: '',
-  otp: ['', '', '', ''],
+  password: '',
 
   age: 29,
   cityTier: 'Metro',
@@ -95,6 +95,6 @@ export const initialState: AppState = {
 };
 
 // Fields that should not be restored verbatim from persisted storage —
-// either meaningless after a restart (otp) or would show stale mid-animation
-// state if replayed (animScore, coachTyping).
-export const NON_PERSISTED_KEYS: (keyof AppState)[] = ['animScore', 'coachTyping', 'otp'];
+// would show stale mid-animation state if replayed (animScore, coachTyping),
+// or must never be written to disk/Firestore in plaintext (password).
+export const NON_PERSISTED_KEYS: (keyof AppState)[] = ['animScore', 'coachTyping', 'password'];
