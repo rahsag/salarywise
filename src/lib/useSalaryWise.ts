@@ -1,8 +1,9 @@
 import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform } from 'react-native';
+import { askCoach, type CoachAskContext } from './coach';
 import { addExpense as addExpenseRemote, deleteExpense as deleteExpenseRemote, subscribeExpenses, type ExpenseEntry } from './expenses';
-import { coachReply, computeScore } from './finance';
+import { computeScore } from './finance';
 import { signOutUser } from './firebaseAuth';
 import { cancelScheduledRemoteSave, loadRemoteState, scheduleRemoteSave, subscribeProStatus } from './firestoreSync';
 import { purchasePro as purchaseProFlow } from './payments';
@@ -13,6 +14,14 @@ export function useSalaryWise() {
   const [state, setState] = useState<AppState>(initialState);
   const [hydrated, setHydrated] = useState(false);
   const [uid, setUid] = useState<string | null>(null);
+  // Web has no @react-native-firebase auth implementation (see below), so there's
+  // no async auth check to wait for there — treat auth as already resolved.
+  const [authChecked, setAuthChecked] = useState(Platform.OS === 'web');
+  const [emailVerified, setEmailVerified] = useState(false);
+  // Whether the one-shot remote profile load for the current uid (or the lack of
+  // one) has resolved — lets AppShell hold the splash screen until it knows
+  // whether a signed-in user has actually finished onboarding.
+  const [remoteLoaded, setRemoteLoaded] = useState(Platform.OS === 'web');
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -25,7 +34,6 @@ export function useSalaryWise() {
   monthlyExpenseTotalRef.current = monthlyExpenseTotal;
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -45,20 +53,32 @@ export function useSalaryWise() {
     // from google-services.json/GoogleService-Info.plist at build time, which the
     // web bundle has no equivalent of. Skip auth/Firestore sync entirely on web.
     if (Platform.OS === 'web') return;
-    return onAuthStateChanged(getAuth(), (user) => setUid(user?.uid ?? null));
+    return onAuthStateChanged(getAuth(), (user) => {
+      setUid(user?.uid ?? null);
+      setEmailVerified(user?.emailVerified ?? false);
+      setAuthChecked(true);
+    });
   }, []);
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid) {
+      setRemoteLoaded(true);
+      return;
+    }
+    setRemoteLoaded(false);
     let cancelled = false;
     loadRemoteState(uid).then((remote) => {
       if (cancelled) return;
       if (remote) {
         setState((cur) => ({ ...cur, ...remote }));
       } else {
-        // No doc yet — first-time signup. Seed it with whatever state we have so far.
+        // No doc yet — first-time signup. Seed it with whatever state we have so
+        // far (onboarded stays false until the Score screen's "Enter SalaryWise"
+        // completes, so this seed write alone must never be read as "finished
+        // onboarding" — see the `onboarded` checks in Login/VerifyEmail/AppShell).
         scheduleRemoteSave(uid, stateRef.current);
       }
+      setRemoteLoaded(true);
     });
     return () => {
       cancelled = true;
@@ -93,7 +113,6 @@ export function useSalaryWise() {
   useEffect(
     () => () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     },
     []
@@ -119,17 +138,20 @@ export function useSalaryWise() {
   const sendChat = useCallback((text: string) => {
     const t = text.trim();
     if (!t) return;
+    const s = stateRef.current;
+    if (!s.proUnlocked) return;
+    const history = s.chat;
+
     setState((cur) => ({
       ...cur,
       chat: [...cur.chat, { role: 'user', text: t }],
       chatInput: '',
       coachTyping: true,
     }));
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      const s = stateRef.current;
+
+    (async () => {
       const effectiveExpenses = monthlyExpenseTotalRef.current > 0 ? monthlyExpenseTotalRef.current : s.expenses;
-      const reply = coachReply(t, {
+      const context: CoachAskContext = {
         salary: s.salary,
         rent: s.rent,
         emi: s.emi,
@@ -146,13 +168,19 @@ export function useSalaryWise() {
         affRate: s.affRate,
         affTenure: s.affTenure,
         scoreTotal: computeScore(s.salary, s.rent, s.emi, effectiveExpenses, s.sip).total,
-      });
+      };
+      let reply: string;
+      try {
+        reply = await askCoach(t, context, history);
+      } catch (err) {
+        reply = err instanceof Error ? err.message : "Couldn't reach your Money Coach. Please try again.";
+      }
       setState((cur) => ({
         ...cur,
         chat: [...cur.chat, { role: 'coach', text: reply }],
         coachTyping: false,
       }));
-    }, 850);
+    })();
   }, []);
 
   const set = <K extends keyof AppState>(key: K) => (value: AppState[K]) =>
@@ -216,6 +244,7 @@ export function useSalaryWise() {
     setTax80c: set('tax80c'),
     setTaxHra: set('taxHra'),
     setChatInput: set('chatInput'),
+    setOnboarded: set('onboarded'),
     sendChat,
     purchasePro,
     addExpense,
@@ -223,7 +252,7 @@ export function useSalaryWise() {
     signOut,
   };
 
-  return { state, actions, hydrated, expenses, monthlyExpenseTotal };
+  return { state, actions, hydrated, expenses, monthlyExpenseTotal, uid, authChecked, emailVerified, remoteLoaded };
 }
 
 export type SalaryWiseActions = ReturnType<typeof useSalaryWise>['actions'];

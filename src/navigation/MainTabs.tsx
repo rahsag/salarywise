@@ -2,12 +2,15 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text } from 'react-native';
 import DashboardScreen from '../screens/DashboardScreen';
 import CoachScreen from '../screens/CoachScreen';
+import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
 import { colors } from '../theme/colors';
 import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export default function MainTabs() {
+  const { state } = useSalaryWiseContext();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -33,6 +36,14 @@ export default function MainTabs() {
           tabBarLabel: 'Coach',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>✦</Text>,
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            if (!state.proUnlocked) {
+              e.preventDefault();
+              (navigation as any).navigate('Upgrade');
+            }
+          },
+        })}
       />
     </Tab.Navigator>
   );

@@ -9,9 +9,13 @@ import type { OnboardingStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
-export default function OnboardingStack() {
+interface OnboardingStackProps {
+  initialRouteName?: keyof OnboardingStackParamList;
+}
+
+export default function OnboardingStack({ initialRouteName = 'Signup' }: OnboardingStackProps) {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator initialRouteName={initialRouteName} screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Signup" component={SignupScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />

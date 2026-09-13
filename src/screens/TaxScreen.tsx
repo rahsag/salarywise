@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { inr, short, taxCalc } from '../lib/finance';
 import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
 import BackHeader from '../components/BackHeader';
@@ -32,7 +32,34 @@ function RecRow({ rec, index }: { rec: Rec; index: number }) {
 export default function TaxScreen() {
   const navigation = useNavigation<any>();
   const { state, actions } = useSalaryWiseContext();
-  const { taxIncome, tax80c, taxHra } = state;
+  const { taxIncome, tax80c, taxHra, proUnlocked } = state;
+
+  if (!proUnlocked) {
+    return (
+      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ flexGrow: 1 }}>
+        <ScreenTransition style={{ padding: 24, paddingTop: 8, paddingBottom: 40 }}>
+          <BackHeader title="Tax & Salary Optimizer" onBack={() => navigation.goBack()} />
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 40 }}>
+            <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.amber, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 22 }}>🧾</Text>
+            </View>
+            <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 22, color: colors.ink, marginTop: 18, textAlign: 'center' }}>
+              Tax Planner is a Pro feature
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.inkMuted, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
+              Unlock Pro to compare old vs new regime and see ranked savings, for life.
+            </Text>
+            <Pressable
+              onPress={() => navigation.navigate('Upgrade')}
+              style={{ marginTop: 22, backgroundColor: colors.green, borderRadius: 16, paddingHorizontal: 24, paddingVertical: 14 }}
+            >
+              <Text style={{ color: colors.cream, fontSize: 15, fontWeight: '700' }}>Unlock Pro</Text>
+            </Pressable>
+          </View>
+        </ScreenTransition>
+      </ScrollView>
+    );
+  }
 
   const taxNew = taxCalc(taxIncome, 'new', 0, 0);
   const taxOld = taxCalc(taxIncome, 'old', tax80c, taxHra);

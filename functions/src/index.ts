@@ -6,10 +6,13 @@ import { defineSecret } from 'firebase-functions/params';
 import Razorpay from 'razorpay';
 
 admin.initializeApp();
-setGlobalOptions({ region: 'asia-south1' });
+// maxInstances caps concurrent Cloud Run instances so a traffic spike or abuse
+// can't scale costs unboundedly — safe for a low-traffic personal app.
+setGlobalOptions({ region: 'asia-south1', maxInstances: 10 });
 
 const razorpayKeyId = defineSecret('RAZORPAY_KEY_ID');
 const razorpayKeySecret = defineSecret('RAZORPAY_KEY_SECRET');
+const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // Pro unlock is a one-time purchase: ₹299, in paise.
 const PRO_UNLOCK_AMOUNT_PAISE = 29900;
@@ -102,5 +105,121 @@ export const verifyRazorpayPayment = onCall(
     });
 
     return { ok: true };
+  }
+);
+
+const GEMINI_MODEL = 'gemini-flash-latest';
+const MAX_MESSAGE_LENGTH = 1000;
+const MAX_HISTORY_TURNS = 10;
+
+interface CoachChatMessage {
+  role: 'user' | 'coach';
+  text: string;
+}
+
+interface CoachContext {
+  salary: number;
+  rent: number;
+  emi: number;
+  expenses: number;
+  sip: number;
+  sipAmt: number;
+  sipR: number;
+  sipY: number;
+  taxIncome: number;
+  tax80c: number;
+  taxHra: number;
+  affIncome: number;
+  affDown: number;
+  affRate: number;
+  affTenure: number;
+  scoreTotal: number;
+}
+
+function buildCoachSystemPrompt(ctx: CoachContext): string {
+  return [
+    "You are Money Coach, a warm and practical financial assistant inside the SalaryWise app, talking to an Indian user.",
+    'All amounts are in INR. Ground every answer in the numbers below — do not ask the user to repeat information you already have.',
+    'Keep replies short: 2-5 sentences, plain language, no markdown headers or bullet walls.',
+    "This is general financial education, not certified financial, tax, or legal advice — say so briefly only when giving a specific tax or investment recommendation.",
+    '',
+    "User's numbers this month:",
+    `- Monthly salary (take-home): ₹${ctx.salary}`,
+    `- Rent: ₹${ctx.rent}`,
+    `- EMI outgo: ₹${ctx.emi}`,
+    `- Other monthly expenses: ₹${ctx.expenses}`,
+    `- Current SIP investment: ₹${ctx.sip}`,
+    `- SIP planning inputs: ₹${ctx.sipAmt}/month at ${ctx.sipR}% expected return for ${ctx.sipY} years`,
+    `- Annual taxable income: ₹${ctx.taxIncome}, Section 80C: ₹${ctx.tax80c}, HRA exemption: ₹${ctx.taxHra}`,
+    `- Home affordability inputs: income ₹${ctx.affIncome}/month, down payment ₹${ctx.affDown}, loan rate ${ctx.affRate}%, tenure ${ctx.affTenure} years`,
+    `- Their overall SalaryWise financial score: ${ctx.scoreTotal}/100`,
+  ].join('\n');
+}
+
+export const askMoneyCoach = onCall(
+  { secrets: [geminiApiKey] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in required.');
+
+    const userDoc = await admin.firestore().doc(`users/${request.auth.uid}`).get();
+    if (!userDoc.data()?.proUnlocked) {
+      throw new HttpsError('permission-denied', 'Money Coach is a Pro feature.');
+    }
+
+    const { message, context, history } = (request.data ?? {}) as {
+      message?: string;
+      context?: CoachContext;
+      history?: CoachChatMessage[];
+    };
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      throw new HttpsError('invalid-argument', 'Message is required.');
+    }
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      throw new HttpsError('invalid-argument', 'Message is too long.');
+    }
+    if (!context) {
+      throw new HttpsError('invalid-argument', 'Financial context is required.');
+    }
+
+    const recentHistory = Array.isArray(history) ? history.slice(-MAX_HISTORY_TURNS) : [];
+    const contents = [
+      ...recentHistory.map((m) => ({
+        role: m.role === 'user' ? ('user' as const) : ('model' as const),
+        parts: [{ text: String(m.text).slice(0, MAX_MESSAGE_LENGTH) }],
+      })),
+      { role: 'user' as const, parts: [{ text: message.trim() }] },
+    ];
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-goog-api-key': geminiApiKey.value(),
+        },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: buildCoachSystemPrompt(context) }] },
+          contents,
+          generationConfig: { maxOutputTokens: 400 },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Gemini API error', response.status, errText);
+      throw new HttpsError('internal', 'Money Coach is unavailable right now. Please try again.');
+    }
+
+    const data = (await response.json()) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const reply = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('').trim();
+    if (!reply) {
+      throw new HttpsError('internal', 'Money Coach could not generate a reply.');
+    }
+
+    return { reply };
   }
 );

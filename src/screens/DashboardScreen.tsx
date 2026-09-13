@@ -54,6 +54,8 @@ export default function DashboardScreen() {
   const initial = (name || 'R').trim().charAt(0).toUpperCase();
   const dashScoreMsg = sc.total >= 65 ? '3 quick wins could push you past 80' : 'Small changes can move this fast';
 
+  const todayLabel = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
+
   const spent = rent + emi + expenses;
   const left = salary - spent - sip;
   const spentPct = Math.round((spent / Math.max(salary, 1)) * 100);
@@ -64,7 +66,7 @@ export default function DashboardScreen() {
       <ScreenTransition style={{ padding: 20, paddingTop: 8, paddingBottom: 26 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4 }}>
           <View>
-            <Text style={{ fontSize: 13, color: colors.tan, fontWeight: '600' }}>Tuesday, 3 Aug</Text>
+            <Text style={{ fontSize: 13, color: colors.tan, fontWeight: '600' }}>{todayLabel}</Text>
             <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 26, color: colors.ink, letterSpacing: -0.3 }}>{greetName}</Text>
           </View>
           <Pressable
@@ -150,7 +152,7 @@ export default function DashboardScreen() {
         </Pressable>
 
         <Pressable
-          onPress={() => navigation.navigate('Coach')}
+          onPress={() => navigation.navigate(proUnlocked ? 'Coach' : 'Upgrade')}
           style={{ width: '100%', marginTop: 14, backgroundColor: colors.amber, borderRadius: 20, padding: 18, flexDirection: 'row', gap: 13, alignItems: 'center' }}
         >
           <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' }}>
@@ -160,6 +162,11 @@ export default function DashboardScreen() {
             <Text style={{ color: colors.ink, fontWeight: '800', fontSize: 14 }}>Chat with your Money Coach</Text>
             <Text style={{ color: '#6b4d1e', fontSize: 11.5, marginTop: 1 }}>Ask anything about your money</Text>
           </View>
+          {!proUnlocked && (
+            <View style={{ backgroundColor: colors.ink, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 20 }}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.amber }}>PRO</Text>
+            </View>
+          )}
           <Text style={{ color: colors.ink, fontSize: 18 }}>→</Text>
         </Pressable>
       </ScreenTransition>

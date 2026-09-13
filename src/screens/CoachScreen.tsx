@@ -13,10 +13,33 @@ export default function CoachScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { state, actions } = useSalaryWiseContext();
-  const { chat, chatInput, coachTyping } = state;
+  const { chat, chatInput, coachTyping, proUnlocked } = state;
   const scrollRef = useRef<ScrollView>(null);
 
-  const send = () => actions.sendChat(chatInput);
+  const send = () => {
+    if (coachTyping) return;
+    actions.sendChat(chatInput);
+  };
+
+  if (!proUnlocked) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: 32, paddingTop: insets.top }}>
+        <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 22, color: colors.amber }}>✦</Text>
+        </View>
+        <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 22, color: colors.ink, marginTop: 18, textAlign: 'center' }}>Money Coach is a Pro feature</Text>
+        <Text style={{ fontSize: 14, color: colors.inkMuted, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
+          Unlock Pro to chat with an AI coach that knows your numbers — budgeting, tax, home loans and investing.
+        </Text>
+        <Pressable
+          onPress={() => navigation.navigate('Upgrade')}
+          style={{ marginTop: 22, backgroundColor: colors.green, borderRadius: 16, paddingHorizontal: 24, paddingVertical: 14 }}
+        >
+          <Text style={{ color: colors.cream, fontSize: 15, fontWeight: '700' }}>Unlock Pro</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -29,7 +52,7 @@ export default function CoachScreen() {
         </View>
         <View>
           <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 17, color: colors.ink }}>Money Coach</Text>
-          <Text style={{ fontSize: 11, color: colors.greenLight, fontWeight: '600' }}>● Online · rule-based demo</Text>
+          <Text style={{ fontSize: 11, color: colors.greenLight, fontWeight: '600' }}>● Online · AI-powered</Text>
         </View>
       </View>
 
@@ -69,7 +92,11 @@ export default function CoachScreen() {
           onSubmitEditing={send}
           placeholder="Ask about money…"
         />
-        <Pressable onPress={send} style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable
+          onPress={send}
+          disabled={coachTyping}
+          style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center', opacity: coachTyping ? 0.6 : 1 }}
+        >
           <Text style={{ fontSize: 18, color: colors.amber }}>↑</Text>
         </Pressable>
       </View>

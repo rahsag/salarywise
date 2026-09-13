@@ -43,7 +43,10 @@ export default function ScoreScreen() {
   const scoreDash = RING_CIRCUMFERENCE * (1 - animScore / 100);
   const scoreMsg = sc.total >= 65 ? `Solid footing, ${name || 'Rahul'}. A few nudges take you higher.` : `A real starting point — here's where the easy wins are.`;
 
-  const enterMain = () => navigation.getParent()?.reset({ index: 0, routes: [{ name: 'Main' }] });
+  const enterMain = () => {
+    actions.setOnboarded(true);
+    navigation.getParent()?.reset({ index: 0, routes: [{ name: 'Main' }] });
+  };
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.green }} contentContainerStyle={{ flexGrow: 1 }}>

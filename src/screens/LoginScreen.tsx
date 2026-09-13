@@ -62,7 +62,7 @@ export default function LoginScreen() {
       }
       const uid = getAuth().currentUser?.uid;
       const remote = uid ? await loadRemoteState(uid) : null;
-      if (remote) {
+      if (remote?.onboarded) {
         navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
       } else {
         navigation.navigate('Profile');

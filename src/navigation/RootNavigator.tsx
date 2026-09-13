@@ -9,14 +9,21 @@ import TaxScreen from '../screens/TaxScreen';
 import UpgradeScreen from '../screens/UpgradeScreen';
 import AccountScreen from '../screens/AccountScreen';
 import ExpensesScreen from '../screens/ExpensesScreen';
-import type { RootStackParamList } from './types';
+import type { OnboardingStackParamList, RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export default function RootNavigator() {
+interface RootNavigatorProps {
+  initialRouteName?: keyof RootStackParamList;
+  onboardingInitialRouteName?: keyof OnboardingStackParamList;
+}
+
+export default function RootNavigator({ initialRouteName = 'Onboarding', onboardingInitialRouteName }: RootNavigatorProps) {
   return (
-    <Stack.Navigator initialRouteName="Onboarding" screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Onboarding" component={OnboardingStack} />
+    <Stack.Navigator initialRouteName={initialRouteName} screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Onboarding">
+        {() => <OnboardingStack initialRouteName={onboardingInitialRouteName} />}
+      </Stack.Screen>
       <Stack.Screen name="Main" component={MainTabs} />
       <Stack.Screen name="Budget" component={BudgetScreen} />
       <Stack.Screen name="Emi" component={EmiScreen} />

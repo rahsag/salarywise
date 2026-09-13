@@ -10,6 +10,10 @@ interface SalaryWiseContextValue {
   hydrated: boolean;
   expenses: ExpenseEntry[];
   monthlyExpenseTotal: number;
+  uid: string | null;
+  authChecked: boolean;
+  emailVerified: boolean;
+  remoteLoaded: boolean;
 }
 
 const SalaryWiseContext = createContext<SalaryWiseContextValue | null>(null);

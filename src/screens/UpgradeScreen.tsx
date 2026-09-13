@@ -37,7 +37,7 @@ export default function UpgradeScreen() {
         </View>
         <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 28, color: colors.ink, marginTop: 18 }}>Unlock Pro</Text>
         <Text style={{ fontSize: 14, color: colors.inkMuted, marginTop: 8, lineHeight: 21 }}>
-          Get the Tax Planner & Salary Optimizer — compare old vs new regime and see ranked savings, for life.
+          Get the Tax Planner & Salary Optimizer and your AI Money Coach — compare old vs new regime, see ranked savings, and chat about your money, for life.
         </Text>
 
         <View style={{ marginTop: 26, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 18 }}>

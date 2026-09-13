@@ -44,6 +44,7 @@ export interface AppState {
   coachTyping: boolean;
 
   proUnlocked: boolean;
+  onboarded: boolean;
 }
 
 export const initialState: AppState = {
@@ -83,13 +84,14 @@ export const initialState: AppState = {
   chat: [
     {
       role: 'coach',
-      text: "Hi Rahul 👋 I'm your Money Coach. Ask me about budgeting, tax, home loans or investing — try a suggestion below.",
+      text: "Hi there 👋 I'm your Money Coach. Ask me about budgeting, tax, home loans or investing — try a suggestion below.",
     },
   ],
   chatInput: '',
   coachTyping: false,
 
   proUnlocked: false,
+  onboarded: false,
 };
 
 // Fields that should not be restored verbatim from persisted storage —
