@@ -38,7 +38,7 @@ export default function SignupScreen() {
     setSending(true);
     try {
       await signUpWithEmail(state.email, state.password);
-      navigation.navigate('VerifyEmail');
+      navigation.navigate('Disclaimer');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {

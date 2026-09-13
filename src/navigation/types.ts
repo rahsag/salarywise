@@ -2,6 +2,7 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 
 export type OnboardingStackParamList = {
   Signup: undefined;
+  Disclaimer: undefined;
   Login: undefined;
   VerifyEmail: undefined;
   Profile: undefined;
@@ -25,6 +26,7 @@ export type RootStackParamList = {
   Upgrade: undefined;
   Account: undefined;
   Expenses: undefined;
+  Allocate: undefined;
 };
 
 declare global {

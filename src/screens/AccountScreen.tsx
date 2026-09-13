@@ -5,9 +5,22 @@ import { inr } from '../lib/finance';
 import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
 import BackHeader from '../components/BackHeader';
 import ScreenTransition from '../components/ScreenTransition';
-import SliderRow from '../components/SliderRow';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
+
+interface StaticRowProps {
+  label: string;
+  value: string;
+}
+
+function StaticRow({ label, value }: StaticRowProps) {
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 }}>
+      <Text style={{ fontSize: 13, fontWeight: '600', color: colors.label }}>{label}</Text>
+      <Text style={{ fontWeight: '700', color: colors.ink, fontSize: 15 }}>{value}</Text>
+    </View>
+  );
+}
 
 export default function AccountScreen() {
   const navigation = useNavigation<any>();
@@ -37,13 +50,20 @@ export default function AccountScreen() {
         <Text style={{ marginTop: 26, marginBottom: 4, fontSize: 12, fontWeight: '700', color: colors.inkMuted, letterSpacing: 0.5 }}>
           YOUR NUMBERS
         </Text>
-        <View style={{ gap: 22, marginTop: 14 }}>
-          <SliderRow label="Take-home salary" display={inr(state.salary)} valueColor={colors.green} min={20000} max={400000} step={1000} value={state.salary} onChange={actions.setSalary} />
-          <SliderRow label="Rent / home EMI" display={inr(state.rent)} min={0} max={150000} step={1000} value={state.rent} onChange={actions.setRent} />
-          <SliderRow label="Other loan EMIs" display={inr(state.emi)} min={0} max={100000} step={1000} value={state.emi} onChange={actions.setEmi} />
-          <SliderRow label="Living expenses" display={inr(state.expenses)} min={0} max={150000} step={1000} value={state.expenses} onChange={actions.setExpenses} />
-          <SliderRow label="Monthly investing (SIP)" display={inr(state.sip)} min={0} max={150000} step={1000} value={state.sip} onChange={actions.setSip} />
+        <View style={{ marginTop: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 18 }}>
+          <StaticRow label="Take-home salary" value={inr(state.salary)} />
+          <StaticRow label="Rent / home EMI" value={inr(state.rent)} />
+          <StaticRow label="Other loan EMIs" value={inr(state.emi)} />
+          <StaticRow label="Living expenses" value={inr(state.expenses)} />
+          <StaticRow label="Monthly investing (SIP)" value={inr(state.sip)} />
         </View>
+
+        <Pressable
+          onPress={() => navigation.navigate('Allocate')}
+          style={{ width: '100%', marginTop: 16, backgroundColor: colors.green, borderRadius: 16, padding: 16, alignItems: 'center' }}
+        >
+          <Text style={{ color: colors.cream, fontSize: 15, fontWeight: '700' }}>Edit numbers →</Text>
+        </Pressable>
 
         <Pressable
           onPress={handleSignOut}

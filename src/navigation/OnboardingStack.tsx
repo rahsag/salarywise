@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SignupScreen from '../screens/SignupScreen';
+import DisclaimerScreen from '../screens/DisclaimerScreen';
 import LoginScreen from '../screens/LoginScreen';
 import VerifyEmailScreen from '../screens/VerifyEmailScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -17,6 +18,7 @@ export default function OnboardingStack({ initialRouteName = 'Signup' }: Onboard
   return (
     <Stack.Navigator initialRouteName={initialRouteName} screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="Disclaimer" component={DisclaimerScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />

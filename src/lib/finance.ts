@@ -39,6 +39,53 @@ export function scoreBand(total: number): string {
   return total >= 80 ? 'Excellent' : total >= 65 ? 'Good' : total >= 45 ? 'Fair' : 'Needs work';
 }
 
+export function scoreImprovementTips(
+  salary: number,
+  rent: number,
+  emi: number,
+  expenses: number,
+  sip: number,
+  sc: ScoreBreakdown
+): string[] {
+  const s = Math.max(salary, 1);
+
+  const opportunities: { gap: number; text: string }[] = [];
+
+  const saveGap = 40 - sc.savePts;
+  if (saveGap > 0) {
+    const savings = salary - rent - emi - expenses;
+    const shortfall = Math.max(0, Math.round(0.4 * s - savings));
+    opportunities.push({
+      gap: saveGap,
+      text: `Free up ${inr(shortfall)}/month from rent, EMIs or expenses — worth up to ${saveGap} more savings points.`,
+    });
+  }
+
+  const debtGap = 30 - sc.debtPts;
+  if (debtGap > 0) {
+    const emiPct = Math.round((emi / s) * 100);
+    opportunities.push({
+      gap: debtGap,
+      text: `Loan EMIs take up ${emiPct}% of income. Paying down or refinancing debt toward 0% is worth up to ${debtGap} more points.`,
+    });
+  }
+
+  const investGap = 30 - sc.investPts;
+  if (investGap > 0) {
+    const targetSip = Math.round(0.2 * s);
+    opportunities.push({
+      gap: investGap,
+      text: `Raise your SIP from ${inr(sip)} to ${inr(targetSip)} (20% of salary) — worth up to ${investGap} more investing points.`,
+    });
+  }
+
+  if (opportunities.length === 0) {
+    return ["You're maxed out across savings, debt and investing — keep it up!"];
+  }
+
+  return opportunities.sort((a, b) => b.gap - a.gap).map((o) => o.text);
+}
+
 export interface EmiResult {
   m: number;
   total: number;

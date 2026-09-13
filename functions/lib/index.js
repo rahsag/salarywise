@@ -44,7 +44,9 @@ const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
 const razorpay_1 = __importDefault(require("razorpay"));
 admin.initializeApp();
-(0, v2_1.setGlobalOptions)({ region: 'asia-south1' });
+// maxInstances caps concurrent Cloud Run instances so a traffic spike or abuse
+// can't scale costs unboundedly — safe for a low-traffic personal app.
+(0, v2_1.setGlobalOptions)({ region: 'asia-south1', maxInstances: 10 });
 const razorpayKeyId = (0, params_1.defineSecret)('RAZORPAY_KEY_ID');
 const razorpayKeySecret = (0, params_1.defineSecret)('RAZORPAY_KEY_SECRET');
 const geminiApiKey = (0, params_1.defineSecret)('GEMINI_API_KEY');

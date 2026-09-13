@@ -9,6 +9,7 @@ import TaxScreen from '../screens/TaxScreen';
 import UpgradeScreen from '../screens/UpgradeScreen';
 import AccountScreen from '../screens/AccountScreen';
 import ExpensesScreen from '../screens/ExpensesScreen';
+import AllocateScreen from '../screens/AllocateScreen';
 import type { OnboardingStackParamList, RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -33,6 +34,7 @@ export default function RootNavigator({ initialRouteName = 'Onboarding', onboard
       <Stack.Screen name="Upgrade" component={UpgradeScreen} />
       <Stack.Screen name="Account" component={AccountScreen} />
       <Stack.Screen name="Expenses" component={ExpensesScreen} />
+      <Stack.Screen name="Allocate" component={AllocateScreen} />
     </Stack.Navigator>
   );
 }

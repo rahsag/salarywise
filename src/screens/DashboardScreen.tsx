@@ -1,10 +1,52 @@
+import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { computeScore, inr, scoreBand } from '../lib/finance';
+import { LayoutAnimation, Platform, Pressable, ScrollView, Text, UIManager, View } from 'react-native';
+import { computeScore, inr, scoreBand, scoreImprovementTips, short } from '../lib/finance';
 import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
+import DonutChart, { type DonutSegment } from '../components/DonutChart';
 import ScreenTransition from '../components/ScreenTransition';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const CHART_BLUE = '#2a78d6';
+const CHART_ORANGE = '#eb6834';
+const CHART_AQUA = '#1baf7a';
+const CHART_YELLOW = '#eda100';
+
+interface LegendRowProps {
+  color: string;
+  label: string;
+  value: string;
+}
+
+function LegendRow({ color, label, value }: LegendRowProps) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
+      <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: color }} />
+      <Text style={{ fontSize: 12, color: colors.greenFaint, flex: 1 }}>{label}</Text>
+      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.cream }}>{value}</Text>
+    </View>
+  );
+}
+
+interface DetailRowProps {
+  label: string;
+  value: string;
+  color?: string;
+}
+
+function DetailRow({ label, value, color = colors.ink }: DetailRowProps) {
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
+      <Text style={{ fontSize: 12.5, color: colors.tan }}>{label}</Text>
+      <Text style={{ fontSize: 12.5, fontWeight: '700', color }}>{value}</Text>
+    </View>
+  );
+}
 
 interface ToolButtonProps {
   icon: string;
@@ -41,12 +83,19 @@ function ToolButton({ icon, bg, title, subtitle, onPress }: ToolButtonProps) {
   );
 }
 
+type ExpandedSection = 'score' | 'summary' | 'breakdown' | null;
+
 export default function DashboardScreen() {
   const navigation = useNavigation<any>();
   const { state, monthlyExpenseTotal } = useSalaryWiseContext();
   const { proUnlocked } = state;
   const { name, salary, rent, emi, sip } = state;
   const expenses = monthlyExpenseTotal > 0 ? monthlyExpenseTotal : state.expenses;
+  const [expanded, setExpanded] = useState<ExpandedSection>(null);
+  const toggle = (section: ExpandedSection) => {
+    LayoutAnimation.configureNext(LayoutAnimation.create(240, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
+    setExpanded((cur) => (cur === section ? null : section));
+  };
 
   const sc = computeScore(salary, rent, emi, expenses, sip);
   const band = scoreBand(sc.total);
@@ -60,6 +109,19 @@ export default function DashboardScreen() {
   const left = salary - spent - sip;
   const spentPct = Math.round((spent / Math.max(salary, 1)) * 100);
   const pw = (v: number) => `${((v / Math.max(salary, 1)) * 100).toFixed(1)}%` as `${number}%`;
+
+  const scoreSegments: DonutSegment[] = [
+    { label: 'Savings', value: sc.savePts, color: CHART_BLUE },
+    { label: 'Debt', value: sc.debtPts, color: CHART_ORANGE },
+    { label: 'Investing', value: sc.investPts, color: CHART_AQUA },
+  ];
+  const moneySegments: DonutSegment[] = [
+    { label: 'Home', value: rent, color: CHART_BLUE },
+    { label: 'EMI', value: emi, color: CHART_ORANGE },
+    { label: 'Living', value: expenses, color: CHART_AQUA },
+    { label: 'Left over', value: Math.max(0, left), color: CHART_YELLOW },
+  ];
+  const improvementTips = scoreImprovementTips(salary, rent, emi, expenses, sip, sc);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ flexGrow: 1 }}>
@@ -77,7 +139,7 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
 
-        <View style={{ marginTop: 16, backgroundColor: colors.green, borderRadius: 26, padding: 22, overflow: 'hidden' }}>
+        <Pressable onPress={() => toggle('score')} style={{ marginTop: 16, backgroundColor: colors.green, borderRadius: 26, padding: 22, overflow: 'hidden' }}>
           <View style={{ position: 'absolute', right: -40, top: -40, width: 150, height: 150, borderRadius: 75, backgroundColor: 'rgba(255,255,255,.05)' }} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <View>
@@ -92,20 +154,84 @@ export default function DashboardScreen() {
             </View>
           </View>
           <Text style={{ fontSize: 13, color: colors.greenMuted, marginTop: 8 }}>{dashScoreMsg}</Text>
-        </View>
+          {expanded === 'score' && (
+            <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.15)' }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.greenFaint, letterSpacing: 0.5 }}>SCORE BREAKDOWN</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 10 }}>
+                <DonutChart
+                  segments={scoreSegments}
+                  size={124}
+                  strokeWidth={20}
+                  centerValue={`${sc.total}`}
+                  centerLabel="/ 100"
+                  centerValueColor={colors.cream}
+                  centerLabelColor={colors.greenFaint}
+                />
+                <View style={{ flex: 1 }}>
+                  <LegendRow color={CHART_BLUE} label="Savings" value={`${sc.savePts}/40`} />
+                  <LegendRow color={CHART_ORANGE} label="Debt" value={`${sc.debtPts}/30`} />
+                  <LegendRow color={CHART_AQUA} label="Investing" value={`${sc.investPts}/30`} />
+                </View>
+              </View>
 
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: 14 }}>
-          <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: colors.borderCard }}>
-            <Text style={{ fontSize: 11, color: colors.tan, fontWeight: '600' }}>Earned</Text>
-            <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 22, color: colors.ink, marginTop: 2 }}>{inr(salary)}</Text>
-          </View>
-          <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: colors.borderCard }}>
-            <Text style={{ fontSize: 11, color: colors.tan, fontWeight: '600' }}>Left to spend</Text>
-            <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 22, color: colors.greenLight, marginTop: 2 }}>{inr(Math.max(0, left))}</Text>
-          </View>
-        </View>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.greenFaint, letterSpacing: 0.5, marginTop: 20 }}>
+                WHERE YOUR MONEY GOES
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 10 }}>
+                <DonutChart
+                  segments={moneySegments}
+                  size={124}
+                  strokeWidth={20}
+                  centerValue={short(salary)}
+                  centerLabel="income"
+                  centerValueColor={colors.cream}
+                  centerLabelColor={colors.greenFaint}
+                />
+                <View style={{ flex: 1 }}>
+                  <LegendRow color={CHART_BLUE} label="Home" value={inr(rent)} />
+                  <LegendRow color={CHART_ORANGE} label="EMI" value={inr(emi)} />
+                  <LegendRow color={CHART_AQUA} label="Living" value={inr(expenses)} />
+                  <LegendRow color={CHART_YELLOW} label="Left over" value={inr(Math.max(0, left))} />
+                </View>
+              </View>
 
-        <View style={{ marginTop: 14, backgroundColor: '#fff', borderRadius: 20, padding: 18, borderWidth: 1, borderColor: colors.borderCard }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.greenFaint, letterSpacing: 0.5, marginTop: 20 }}>
+                HOW TO IMPROVE
+              </Text>
+              <View style={{ marginTop: 8, gap: 8 }}>
+                {improvementTips.map((tip, i) => (
+                  <View key={i} style={{ flexDirection: 'row', gap: 8 }}>
+                    <Text style={{ fontSize: 12.5, color: colors.amber, fontWeight: '800' }}>{i + 1}.</Text>
+                    <Text style={{ fontSize: 12.5, color: colors.greenMuted, lineHeight: 18, flex: 1 }}>{tip}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+        </Pressable>
+
+        <Pressable onPress={() => toggle('summary')} style={{ marginTop: 14, backgroundColor: '#fff', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: colors.borderCard }}>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 11, color: colors.tan, fontWeight: '600' }}>Earned</Text>
+              <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 22, color: colors.ink, marginTop: 2 }}>{inr(salary)}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 11, color: colors.tan, fontWeight: '600' }}>Left to spend</Text>
+              <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 22, color: colors.greenLight, marginTop: 2 }}>{inr(Math.max(0, left))}</Text>
+            </View>
+          </View>
+          {expanded === 'summary' && (
+            <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.borderCard }}>
+              <DetailRow label="Take-home salary" value={inr(salary)} />
+              <DetailRow label="Total spent" value={inr(spent)} />
+              <DetailRow label="Invested (SIP)" value={inr(sip)} />
+              <DetailRow label="Left over" value={inr(Math.max(0, left))} color={colors.greenLight} />
+            </View>
+          )}
+        </Pressable>
+
+        <Pressable onPress={() => toggle('breakdown')} style={{ marginTop: 14, backgroundColor: '#fff', borderRadius: 20, padding: 18, borderWidth: 1, borderColor: colors.borderCard }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Text style={{ fontSize: 12, color: colors.tan, fontWeight: '600' }}>Spent {spentPct}% of income</Text>
             <Text style={{ fontSize: 12, color: colors.tan, fontWeight: '600' }}>{inr(spent)}</Text>
@@ -122,7 +248,14 @@ export default function DashboardScreen() {
             <Text style={{ fontSize: 11, color: colors.amber }}>● EMI</Text>
             <Text style={{ fontSize: 11, color: colors.brown }}>● Living</Text>
           </View>
-        </View>
+          {expanded === 'breakdown' && (
+            <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.borderCard }}>
+              <DetailRow label="Home (rent / home EMI)" value={inr(rent)} color={colors.greenLight} />
+              <DetailRow label="Other loan EMIs" value={inr(emi)} color={colors.amber} />
+              <DetailRow label="Living expenses" value={inr(expenses)} color={colors.brown} />
+            </View>
+          )}
+        </Pressable>
 
         <Text style={{ marginHorizontal: 4, marginTop: 22, marginBottom: 12, fontFamily: fonts.serifSemiBold, fontSize: 18, color: colors.ink }}>Your toolkit</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 11, justifyContent: 'space-between' }}>
@@ -131,6 +264,7 @@ export default function DashboardScreen() {
           <ToolButton icon="📈" bg={colors.purplePale} title="SIP" subtitle="Grow wealth" onPress={() => navigation.navigate('Sip')} />
           <ToolButton icon="🏠" bg={colors.bluePale} title="Home" subtitle="Affordability" onPress={() => navigation.navigate('Afford')} />
           <ToolButton icon="🧺" bg={colors.amberPale} title="Expenses" subtitle="Log a spend" onPress={() => navigation.navigate('Expenses')} />
+          <ToolButton icon="🥧" bg={colors.rose} title="Allocate" subtitle="Salary split" onPress={() => navigation.navigate('Allocate')} />
         </View>
 
         <Pressable
