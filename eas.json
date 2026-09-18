@@ -12,11 +12,15 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "android": {
+        "credentialsSource": "local"
+      }
     },
     "apk": {
       "extends": "production",
       "android": {
+        "credentialsSource": "local",
         "buildType": "apk"
       }
     }

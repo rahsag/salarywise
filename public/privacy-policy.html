@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy Policy — SalaryWise</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0;
+    padding: 24px 16px 60px;
+    background: #faf7f0;
+    color: #1f2a20;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin-bottom: 4px; }
+  .sub { color: #5a6b5e; margin-top: 0; margin-bottom: 32px; }
+  h2 { font-size: 1.15rem; margin-top: 36px; }
+  ol, ul { padding-left: 22px; }
+  li { margin-bottom: 8px; }
+  .card {
+    background: #fff;
+    border: 1px solid #e3ddcf;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-top: 12px;
+  }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  td, th { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e3ddcf; font-size: 0.95rem; vertical-align: top; }
+  th { color: #5a6b5e; font-weight: 600; }
+  a { color: #2f4a34; }
+  footer { margin-top: 40px; font-size: 0.85rem; color: #5a6b5e; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #14201a; color: #eef2ec; }
+    .sub, th, footer { color: #a9b8ad; }
+    .card { background: #1b2921; border-color: #2a3a30; }
+    td, th { border-color: #2a3a30; }
+    a { color: #7fbf94; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Privacy Policy</h1>
+    <p class="sub">SalaryWise, developed by suryanshu15 — last updated 14 September 2026</p>
+
+    <p>
+      This policy explains what data SalaryWise collects, why, and who it's shared with. SalaryWise is a personal
+      finance app: it helps you track salary, expenses, EMIs, and investments, and offers an optional AI chat feature
+      ("Money Coach").
+    </p>
+
+    <h2>Data we collect</h2>
+    <div class="card">
+      <table>
+        <tr><th>Data</th><th>Why we collect it</th></tr>
+        <tr><td>Name and email address</td><td>To create and manage your account (sign-in via Firebase Authentication)</td></tr>
+        <tr><td>Salary, rent, EMI, expenses, SIP, and tax figures you enter</td><td>To power the app's budgeting, scoring, and planning features</td></tr>
+        <tr><td>Purchase history (Pro unlock order ID, amount, timestamp)</td><td>To process payment and unlock Pro features</td></tr>
+        <tr><td>Money Coach chat messages and the financial context you've entered</td><td>To generate a response, only when you use the Money Coach chat feature</td></tr>
+      </table>
+    </div>
+    <p>
+      We do not use analytics, advertising, or crash-reporting SDKs. We do not collect your location, contacts,
+      photos, camera or microphone data, or browsing history.
+    </p>
+
+    <h2>Who we share data with</h2>
+    <ul>
+      <li><strong>Google Firebase</strong> (Authentication, Firestore database, Cloud Functions) — hosts your account and app data, acting on our behalf as our infrastructure provider.</li>
+      <li><strong>Razorpay</strong> — processes Pro-unlock payments. Purchase details (amount, order/payment ID) are shared with Razorpay to complete the transaction. We never see or store your full card, UPI, or banking credentials.</li>
+      <li><strong>Google's Gemini API</strong> — if you use the Money Coach chat feature, your message and the financial figures you've entered are sent to Gemini to generate a reply. This only happens when you actively use that feature.</li>
+    </ul>
+    <p>We do not sell your data, and we do not share it with advertisers or data brokers.</p>
+
+    <h2>Data security</h2>
+    <p>
+      Data is encrypted in transit (HTTPS) between the app, our Cloud Functions, and the third parties above, and
+      encrypted at rest in Firestore.
+    </p>
+
+    <h2>Data retention and deletion</h2>
+    <p>
+      You can delete your account and its associated data (profile, financial inputs, Pro status) at any time from
+      <strong>Account → Delete account</strong> in the app, or by emailing us — see our
+      <a href="./delete-account.html">account deletion page</a> for details. Payment records are retained after
+      account deletion for financial and legal record-keeping requirements.
+    </p>
+
+    <h2>Children's privacy</h2>
+    <p>SalaryWise is not directed at children and is not intended for use by anyone under 18.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If this policy changes, we'll update the date above and the version published at this URL.</p>
+
+    <footer>
+      Questions about this policy? Contact <a href="mailto:erudatasolutions@gmail.com">erudatasolutions@gmail.com</a>.
+    </footer>
+  </div>
+</body>
+</html>

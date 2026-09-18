@@ -7,6 +7,11 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from '@react-native-firebase/auth';
+import { getApp } from '@react-native-firebase/app';
+import { getFunctions, httpsCallable } from '@react-native-firebase/functions';
+
+// Must match setGlobalOptions({ region: ... }) in functions/src/index.ts.
+const FUNCTIONS_REGION = 'asia-south1';
 
 function friendlyAuthError(err: unknown): string {
   const code = (err as { code?: string })?.code ?? '';
@@ -67,6 +72,16 @@ export async function refreshEmailVerified(): Promise<boolean> {
 
 export async function signOutUser(): Promise<void> {
   await signOut(getAuth());
+}
+
+export async function deleteAccount(): Promise<void> {
+  const functions = getFunctions(getApp(), FUNCTIONS_REGION);
+  const remove = httpsCallable(functions, 'deleteAccount');
+  try {
+    await remove();
+  } catch (err) {
+    throw new Error((err as { message?: string })?.message || "Couldn't delete your account. Please try again.");
+  }
 }
 
 export async function resetPassword(email: string): Promise<void> {

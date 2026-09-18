@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.askMoneyCoach = exports.verifyRazorpayPayment = exports.createRazorpayOrder = void 0;
+exports.askMoneyCoach = exports.deleteAccount = exports.verifyRazorpayPayment = exports.createRazorpayOrder = void 0;
 const crypto = __importStar(require("crypto"));
 const admin = __importStar(require("firebase-admin"));
 const v2_1 = require("firebase-functions/v2");
@@ -120,6 +120,21 @@ exports.verifyRazorpayPayment = (0, https_1.onCall)({ secrets: [razorpayKeyId, r
     });
     return { ok: true };
 });
+exports.deleteAccount = (0, https_1.onCall)(async (request) => {
+    if (!request.auth)
+        throw new https_1.HttpsError('unauthenticated', 'Sign in required.');
+    const uid = request.auth.uid;
+    const db = admin.firestore();
+    // payments/{paymentId} records are kept indefinitely for financial/accounting
+    // records — deleting the user's own data and Auth account does not remove them.
+    const expensesSnap = await db.collection(`users/${uid}/expenses`).get();
+    const batch = db.batch();
+    expensesSnap.docs.forEach((doc) => batch.delete(doc.ref));
+    batch.delete(db.doc(`users/${uid}`));
+    await batch.commit();
+    await admin.auth().deleteUser(uid);
+    return { ok: true };
+});
 const GEMINI_MODEL = 'gemini-flash-latest';
 const MAX_MESSAGE_LENGTH = 1000;
 const MAX_HISTORY_TURNS = 10;
@@ -167,7 +182,7 @@ exports.askMoneyCoach = (0, https_1.onCall)({ secrets: [geminiApiKey] }, async (
         })),
         { role: 'user', parts: [{ text: message.trim() }] },
     ];
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
+    const callGemini = () => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
         method: 'POST',
         headers: {
             'content-type': 'application/json',
@@ -176,9 +191,16 @@ exports.askMoneyCoach = (0, https_1.onCall)({ secrets: [geminiApiKey] }, async (
         body: JSON.stringify({
             systemInstruction: { parts: [{ text: buildCoachSystemPrompt(context) }] },
             contents,
-            generationConfig: { maxOutputTokens: 400 },
+            generationConfig: { maxOutputTokens: 400, thinkingConfig: { thinkingBudget: 0 } },
         }),
     });
+    let response = await callGemini();
+    // Gemini returns 503 when the model is briefly overloaded — a short retry
+    // usually succeeds without the user needing to resend their message.
+    if (response.status === 503) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        response = await callGemini();
+    }
     if (!response.ok) {
         const errText = await response.text();
         console.error('Gemini API error', response.status, errText);

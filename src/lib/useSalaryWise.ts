@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import { askCoach, type CoachAskContext } from './coach';
 import { addExpense as addExpenseRemote, deleteExpense as deleteExpenseRemote, subscribeExpenses, type ExpenseEntry } from './expenses';
 import { computeScore } from './finance';
-import { signOutUser } from './firebaseAuth';
+import { deleteAccount as deleteAccountRemote, signOutUser } from './firebaseAuth';
 import { cancelScheduledRemoteSave, loadRemoteState, scheduleRemoteSave, subscribeProStatus } from './firestoreSync';
 import { purchasePro as purchaseProFlow } from './payments';
 import { clearState, loadState, saveState } from './storage';
@@ -216,6 +216,12 @@ export function useSalaryWise() {
     setState(initialState);
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    await deleteAccountRemote();
+    await clearState();
+    setState(initialState);
+  }, []);
+
   const actions = {
     startScore,
     setName: set('name'),
@@ -250,6 +256,7 @@ export function useSalaryWise() {
     addExpense,
     deleteExpense,
     signOut,
+    deleteAccount,
   };
 
   return { state, actions, hydrated, expenses, monthlyExpenseTotal, uid, authChecked, emailVerified, remoteLoaded };

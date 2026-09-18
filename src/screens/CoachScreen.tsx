@@ -72,17 +72,19 @@ export default function CoachScreen() {
         )}
       </ScrollView>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 6, paddingBottom: 4, gap: 8 }}>
-        {CHIPS.map((c) => (
-          <Pressable
-            key={c}
-            onPress={() => actions.sendChat(c)}
-            style={{ borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 20, paddingHorizontal: 13, paddingVertical: 8 }}
-          >
-            <Text style={{ color: colors.greenLight, fontSize: 12, fontWeight: '600' }}>{c}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
+      {chat.length === 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 8, gap: 8 }}>
+          {CHIPS.map((c) => (
+            <Pressable
+              key={c}
+              onPress={() => actions.sendChat(c)}
+              style={{ borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 20, paddingHorizontal: 13, paddingVertical: 8 }}
+            >
+              <Text style={{ color: colors.greenLight, fontSize: 12, fontWeight: '600' }}>{c}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
 
       <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 16, flexDirection: 'row', gap: 9, alignItems: 'center', backgroundColor: colors.cream }}>
         <TextInput

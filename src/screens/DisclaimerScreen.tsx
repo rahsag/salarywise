@@ -27,8 +27,15 @@ export default function DisclaimerScreen() {
           </Paragraph>
           <Paragraph>
             Payments made through the application are processed securely through Razorpay. The application does not store users'
-            complete payment card, UPI, or banking credentials. Payment-related information is handled in accordance with the
-            policies of the applicable payment service provider.
+            complete payment card, UPI, or banking credentials. Payment-related information — including purchase history — is
+            shared with Razorpay to process your payment, in accordance with the policies of the applicable payment service
+            provider.
+          </Paragraph>
+          <Paragraph>
+            Your name and email address are collected to manage your account and are not shared with third parties. The salary,
+            expenses, and other financial figures you enter are stored to power the app's features and are not shared with third
+            parties, except when you use the Money Coach chat feature: your message and financial context are sent to Google's
+            Gemini API to generate a response. The application does not use analytics, advertising, or crash-reporting services.
           </Paragraph>
           <Paragraph>
             By using this application, you acknowledge that you are responsible for how you use the information and services
@@ -36,8 +43,8 @@ export default function DisclaimerScreen() {
             information or misuse of the application.
           </Paragraph>
           <Paragraph>
-            For questions, issues, or concerns regarding the application, please contact the support team through the contact
-            information provided on the application's Play Store listing.
+            For questions, issues, or concerns regarding the application, including requests to delete your account and data,
+            please contact erudatasolutions@gmail.com.
           </Paragraph>
         </ScreenTransition>
       </ScrollView>

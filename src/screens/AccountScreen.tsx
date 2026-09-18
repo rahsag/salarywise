@@ -26,6 +26,9 @@ export default function AccountScreen() {
   const navigation = useNavigation<any>();
   const { state, actions } = useSalaryWiseContext();
   const [signingOut, setSigningOut] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -34,6 +37,18 @@ export default function AccountScreen() {
       navigation.reset({ index: 0, routes: [{ name: 'Onboarding' }] });
     } finally {
       setSigningOut(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await actions.deleteAccount();
+      navigation.reset({ index: 0, routes: [{ name: 'Onboarding' }] });
+    } catch (err) {
+      setDeleteError((err as { message?: string })?.message || "Couldn't delete your account. Please try again.");
+      setDeleting(false);
     }
   };
 
@@ -72,6 +87,40 @@ export default function AccountScreen() {
         >
           {signingOut ? <ActivityIndicator color={colors.redOrange} /> : <Text style={{ color: colors.redOrange, fontSize: 15, fontWeight: '700' }}>Sign out</Text>}
         </Pressable>
+
+        {!confirmingDelete ? (
+          <Pressable
+            onPress={() => setConfirmingDelete(true)}
+            style={{ width: '100%', marginTop: 14, padding: 12, alignItems: 'center' }}
+          >
+            <Text style={{ color: colors.inkMuted, fontSize: 13, fontWeight: '600' }}>Delete account</Text>
+          </Pressable>
+        ) : (
+          <View style={{ marginTop: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.redOrange, borderRadius: 16, padding: 18 }}>
+            <Text style={{ color: colors.ink, fontSize: 14, fontWeight: '600' }}>
+              This permanently deletes your account and all your data — salary numbers, expenses, and Pro status. This can't be undone.
+            </Text>
+            {deleteError ? (
+              <Text style={{ color: colors.redOrange, fontSize: 13, marginTop: 10 }}>{deleteError}</Text>
+            ) : null}
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+              <Pressable
+                onPress={() => setConfirmingDelete(false)}
+                disabled={deleting}
+                style={{ flex: 1, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 14, alignItems: 'center' }}
+              >
+                <Text style={{ color: colors.ink, fontSize: 14, fontWeight: '700' }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleDeleteAccount}
+                disabled={deleting}
+                style={{ flex: 1, backgroundColor: colors.redOrange, borderRadius: 14, padding: 14, alignItems: 'center', opacity: deleting ? 0.7 : 1 }}
+              >
+                {deleting ? <ActivityIndicator color={colors.cream} /> : <Text style={{ color: colors.cream, fontSize: 14, fontWeight: '700' }}>Delete permanently</Text>}
+              </Pressable>
+            </View>
+          </View>
+        )}
       </ScreenTransition>
     </ScrollView>
   );

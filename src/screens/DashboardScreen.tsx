@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { LayoutAnimation, Platform, Pressable, ScrollView, Text, UIManager, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { computeScore, inr, scoreBand, scoreImprovementTips, short } from '../lib/finance';
 import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
+import Collapsible from '../components/Collapsible';
 import DonutChart, { type DonutSegment } from '../components/DonutChart';
 import ScreenTransition from '../components/ScreenTransition';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 const CHART_BLUE = '#2a78d6';
 const CHART_ORANGE = '#eb6834';
@@ -92,10 +89,7 @@ export default function DashboardScreen() {
   const { name, salary, rent, emi, sip } = state;
   const expenses = monthlyExpenseTotal > 0 ? monthlyExpenseTotal : state.expenses;
   const [expanded, setExpanded] = useState<ExpandedSection>(null);
-  const toggle = (section: ExpandedSection) => {
-    LayoutAnimation.configureNext(LayoutAnimation.create(240, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
-    setExpanded((cur) => (cur === section ? null : section));
-  };
+  const toggle = (section: ExpandedSection) => setExpanded((cur) => (cur === section ? null : section));
 
   const sc = computeScore(salary, rent, emi, expenses, sip);
   const band = scoreBand(sc.total);
@@ -154,7 +148,7 @@ export default function DashboardScreen() {
             </View>
           </View>
           <Text style={{ fontSize: 13, color: colors.greenMuted, marginTop: 8 }}>{dashScoreMsg}</Text>
-          {expanded === 'score' && (
+          <Collapsible expanded={expanded === 'score'}>
             <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,.15)' }}>
               <Text style={{ fontSize: 11, fontWeight: '700', color: colors.greenFaint, letterSpacing: 0.5 }}>SCORE BREAKDOWN</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 10 }}>
@@ -207,7 +201,7 @@ export default function DashboardScreen() {
                 ))}
               </View>
             </View>
-          )}
+          </Collapsible>
         </Pressable>
 
         <Pressable onPress={() => toggle('summary')} style={{ marginTop: 14, backgroundColor: '#fff', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: colors.borderCard }}>
@@ -221,14 +215,14 @@ export default function DashboardScreen() {
               <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 22, color: colors.greenLight, marginTop: 2 }}>{inr(Math.max(0, left))}</Text>
             </View>
           </View>
-          {expanded === 'summary' && (
+          <Collapsible expanded={expanded === 'summary'}>
             <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.borderCard }}>
               <DetailRow label="Take-home salary" value={inr(salary)} />
               <DetailRow label="Total spent" value={inr(spent)} />
               <DetailRow label="Invested (SIP)" value={inr(sip)} />
               <DetailRow label="Left over" value={inr(Math.max(0, left))} color={colors.greenLight} />
             </View>
-          )}
+          </Collapsible>
         </Pressable>
 
         <Pressable onPress={() => toggle('breakdown')} style={{ marginTop: 14, backgroundColor: '#fff', borderRadius: 20, padding: 18, borderWidth: 1, borderColor: colors.borderCard }}>
@@ -248,13 +242,13 @@ export default function DashboardScreen() {
             <Text style={{ fontSize: 11, color: colors.amber }}>● EMI</Text>
             <Text style={{ fontSize: 11, color: colors.brown }}>● Living</Text>
           </View>
-          {expanded === 'breakdown' && (
+          <Collapsible expanded={expanded === 'breakdown'}>
             <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.borderCard }}>
               <DetailRow label="Home (rent / home EMI)" value={inr(rent)} color={colors.greenLight} />
               <DetailRow label="Other loan EMIs" value={inr(emi)} color={colors.amber} />
               <DetailRow label="Living expenses" value={inr(expenses)} color={colors.brown} />
             </View>
-          )}
+          </Collapsible>
         </Pressable>
 
         <Text style={{ marginHorizontal: 4, marginTop: 22, marginBottom: 12, fontFamily: fonts.serifSemiBold, fontSize: 18, color: colors.ink }}>Your toolkit</Text>

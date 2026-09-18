@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSalaryWiseContext } from '../lib/SalaryWiseContext';
 import { signUpWithEmail } from '../lib/firebaseAuth';
 import ScreenTransition from '../components/ScreenTransition';
@@ -59,7 +59,7 @@ export default function SignupScreen() {
             justifyContent: 'center',
           }}
         >
-          <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 26, color: colors.amber }}>S</Text>
+          <Image source={require('../../assets/android-icon-foreground.png')} style={{ width: 34, height: 34 }} resizeMode="contain" />
         </View>
         <Text style={{ fontFamily: fonts.serifSemiBold, fontSize: 32, color: colors.ink, marginTop: 22, lineHeight: 35, letterSpacing: -0.3 }}>
           Money, made{'\n'}manageable.
